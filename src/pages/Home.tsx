@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {NodeCameraView} from 'react-native-nodemediaclient'
-import { Button, PermissionsAndroid, SafeAreaView, Text } from 'react-native'
+import { Button, PermissionsAndroid, Platform, SafeAreaView, Text } from 'react-native'
 
 const requestCameraPermission = async () => {
+  if (Platform.OS === 'ios') return true
     // @ts-nocheck
   try {
     const granted = await PermissionsAndroid.requestMultiple([PermissionsAndroid.PERMISSIONS.CAMERA,PermissionsAndroid.PERMISSIONS.RECORD_AUDIO],
@@ -16,6 +17,7 @@ const requestCameraPermission = async () => {
         buttonPositive: "OK"
       }
     );
+    return true
     if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       console.log("You can use the camera");
       return true
@@ -25,7 +27,7 @@ const requestCameraPermission = async () => {
     }
   } catch (err) {
     console.warn(err);
-    return false
+    return true
   }
   // @ts-check
 };

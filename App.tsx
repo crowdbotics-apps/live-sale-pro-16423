@@ -24,7 +24,7 @@ export default () => {
 
   // return <Signin />
   return <NavigationContainer>
-    <RootStack.Navigator initialRouteName="Home">
+    <RootStack.Navigator initialRouteName="Signin">
       <RootStack.Screen name="Signin" component={Signin} options={{headerShown: false}} />
       <RootStack.Screen name="Home" component={Home} options={{
         headerStyle: {
