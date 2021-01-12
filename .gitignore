@@ -18,8 +18,8 @@ xcuserdata
 *.moved-aside
 DerivedData
 *.hmap
+*.ipa
 *.xcuserstate
-project.xcworkspace
 
 # Android/IntelliJ
 #
@@ -28,6 +28,10 @@ build/
 .gradle
 local.properties
 *.iml
+
+# Visual Studio Code
+#
+.vscode/
 
 # node.js
 #
@@ -38,6 +42,8 @@ yarn-error.log
 # BUCK
 buck-out/
 \.buckd/
+*.keystore
+!debug.keystore
 
 # fastlane
 #
@@ -49,15 +55,9 @@ buck-out/
 */fastlane/report.xml
 */fastlane/Preview.html
 */fastlane/screenshots
-*/fastlane/test_output/
 
 # Bundle artifact
 *.jsbundle
 
 # CocoaPods
 /ios/Pods/
-
-## App packaging
-*.ipa
-*.dSYM.zip
-*.dSYM
