@@ -74,5 +74,9 @@
 		<string>Barlow-Thin.ttf</string>
 		<string>Barlow-ThinItalic.ttf</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Livesale requires access to your phone’s camera.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Livesale requires access to your phone’s Microphone.</string>
 </dict>
 </plist>

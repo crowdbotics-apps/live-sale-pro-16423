@@ -44,7 +44,7 @@ const LInput = ({title, ...props}: TextInputProps & {title: string}) =>  <View s
         </View>
     </View>
 
-export default () => <SafeAreaView style={{flex: 1}}>
+export default ({navigation}) => <SafeAreaView style={{flex: 1}}>
     <View style={{backgroundColor: '#D73776', flexGrow: 0.2, justifyContent: 'center', alignItems: 'center'}}>
         <Image source={require('../assets/images/logo.png')} />
     </View>
@@ -70,6 +70,6 @@ export default () => <SafeAreaView style={{flex: 1}}>
     </View>
     </View>
     <View style={{paddingHorizontal: 40, flexGrow: 0.2, justifyContent: 'center'}}>
-        <TouchableOpacity style={styles.button} onPress={() => {}}><Text style={styles.buttonText}>Sign In</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={() => {navigation.replace('Home')}}><Text style={styles.buttonText}>Sign In</Text></TouchableOpacity>
     </View>
 </SafeAreaView>
