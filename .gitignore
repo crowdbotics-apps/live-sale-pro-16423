@@ -55,9 +55,14 @@ buck-out/
 */fastlane/report.xml
 */fastlane/Preview.html
 */fastlane/screenshots
+*/fastlane/test_output/
 
 # Bundle artifact
 *.jsbundle
 
 # CocoaPods
 /ios/Pods/
+
+*.ipa
+*.dSYM.zip
+*.dSYM
