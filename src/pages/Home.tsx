@@ -149,8 +149,8 @@ export default function HomeScreen({ navigation }) {
             resolution,
         });
     };
-    const toggle = () => {
-        console.log('toggle 1', isRecording);
+    const toggleStream = () => {
+        console.log('toggleStream', isRecording);
         setIsLeftMenuActive(false);
         setIsRightMenuActive(false);
         LayoutAnimation.easeInEaseOut();
@@ -319,7 +319,7 @@ export default function HomeScreen({ navigation }) {
                         isRecording ? styles.controllerRecording : null,
                     ]}>
                     <RecordingTime recordStartTime={recordStartTime} />
-                    <TouchableOpacity style={styles.controllerButton} onPress={toggle}>
+                    <TouchableOpacity style={styles.controllerButton} onPress={toggleStream}>
                         <Text style={styles.controllerButtonText}>
                             {isRecording ? 'STOP' : 'START'}
                         </Text>
