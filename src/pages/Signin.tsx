@@ -28,7 +28,7 @@ export default function Signin({ navigation }) {
     const handleLogin = () => {
         console.log("handleLogin", email, password);
         navigation.push('Home')
-        
+
         // request.post('/api/v1/login/', {
         //     email,
         //     password,
