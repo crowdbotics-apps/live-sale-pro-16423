@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View, Button, StyleSheet, TextInputProps } from 'react-native'
+import { request } from '../api/apiClient'
 
 enum Colors {
     Pink = '#d73776',
@@ -19,38 +20,71 @@ const UnderlinedInput = ({ title, ...props }: TextInputProps & { title: string }
     </View>
 )
 
-export default ({ navigation }) => <View style={{ flex: 1 }}>
-    <SafeAreaView style={{ flex: 0, backgroundColor: Colors.Pink }} />
-    <SafeAreaView style={{ flex: 1 }} >
-        <View style={{ backgroundColor: '#D73776', flexGrow: 0.2, justifyContent: 'center', alignItems: 'center' }}>
-            <Image source={require('../../assets/images/logo.png')} />
-        </View>
-        <View style={{ justifyContent: 'center', alignItems: 'center', flexGrow: 0.3 }}>
-            <View style={{ flexDirection: 'row' }}>
-                <Text style={{ fontSize: 24, fontFamily: 'Barlow', fontWeight: '400' }}>Welcome to </Text>
-                <Text style={{ fontSize: 24, fontFamily: 'Barlow', fontWeight: '700' }}>Live Stream</Text>
-            </View>
+export default function Signin({ navigation }) {
 
-            <Text style={{ fontSize: 18, fontFamily: 'Barlow' }}>Sign in</Text>
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-            <View style={{ paddingHorizontal: 40 }}>
-                <UnderlinedInput title="Email" textContentType="emailAddress" autoCapitalize="none" />
-            </View>
-            <View style={{ paddingHorizontal: 40 }}>
-                <UnderlinedInput title="Password" secureTextEntry={true} textContentType="password" />
-            </View>
-            <View style={{ paddingVertical: 12 }}>
-                <View style={{ flexDirection: 'row' }}>
-                    <Text style={{ fontFamily: 'Roboto', fontWeight: '400', fontSize: 16 }}>I forgot my password, </Text>
-                    <TouchableOpacity><Text style={{ fontFamily: 'Roboto', fontWeight: '700', fontSize: 16, color: '#0084FE' }}>Reset password</Text></TouchableOpacity>
+    const handleLogin = () => {
+        console.log("handleLogin", email, password);
+        navigation.push('Home')
+        
+        // request.post('/api/v1/login/', {
+        //     email,
+        //     password,
+        // })
+        // .then(function (response) {
+        //     console.log(response);
+        //     navigation.push('Home')
+        // })
+        // .catch(function (error) {
+        //     console.log(error)
+        // })
+    }
+
+    return (
+        <View style={{ flex: 1 }}>
+            <SafeAreaView style={{ flex: 0, backgroundColor: Colors.Pink }} />
+            <SafeAreaView style={{ flex: 1 }} >
+                <View style={{ backgroundColor: '#D73776', flexGrow: 0.2, justifyContent: 'center', alignItems: 'center' }}>
+                    <Image source={require('../../assets/images/logo.png')} />
                 </View>
-            </View>
+                <View style={{ justifyContent: 'center', alignItems: 'center', flexGrow: 0.3 }}>
+                    <View style={{ flexDirection: 'row' }}>
+                        <Text style={{ fontSize: 24, fontFamily: 'Barlow', fontWeight: '400' }}>Welcome to </Text>
+                        <Text style={{ fontSize: 24, fontFamily: 'Barlow', fontWeight: '700' }}>Live Stream</Text>
+                    </View>
+
+                    <Text style={{ fontSize: 18, fontFamily: 'Barlow' }}>Sign in</Text>
+
+                    <View style={{ paddingHorizontal: 40 }}>
+                        <UnderlinedInput 
+                        title="Email" 
+                        textContentType="emailAddress" 
+                        autoCapitalize="none" 
+                        onChangeText={text => { setEmail(text) }} />
+                    </View>
+                    <View style={{ paddingHorizontal: 40 }}>
+                        <UnderlinedInput 
+                        title="Password" 
+                        secureTextEntry={true} 
+                        textContentType="password"
+                        onChangeText={text => { setPassword(text) }}  />
+                    </View>
+                    <View style={{ paddingVertical: 12 }}>
+                        <View style={{ flexDirection: 'row' }}>
+                            <Text style={{ fontFamily: 'Roboto', fontWeight: '400', fontSize: 16 }}>I forgot my password, </Text>
+                            <TouchableOpacity><Text style={{ fontFamily: 'Roboto', fontWeight: '700', fontSize: 16, color: '#0084FE' }}>Reset password</Text></TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={() => { handleLogin() }}><Text style={styles.buttonText}>Sign In</Text></TouchableOpacity>
+                </View>
+            </SafeAreaView>
         </View>
-        <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={() => { navigation.push('Home') }}><Text style={styles.buttonText}>Sign In</Text></TouchableOpacity>
-        </View>
-    </SafeAreaView>
-</View>
+    )
+}
 
 const styles = StyleSheet.create({
     button: {

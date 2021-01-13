@@ -16,10 +16,8 @@ import {
     LayoutAnimation,
     Alert,
 } from 'react-native';
-
 import { NodeCameraView } from 'react-native-nodemediaclient';
 import moment from 'moment';
-
 import StopConfirmationModal from '../components/StopConfirmationModal';
 
 const MENU_ICON = require('../../assets/images/menu.png');
