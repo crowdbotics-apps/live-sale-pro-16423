@@ -7,16 +7,20 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@react-native-community/masked-view": "^0.1.10",
     "@react-navigation/native": "^5.8.10",
     "@react-navigation/stack": "^5.12.8",
+    "axios": "0.19.0",
+    "moment": "^2.28.0",
+    "patch-package": "^6.2.2",
+    "postinstall-postinstall": "^2.1.0",
     "react": "16.13.1",
     "react-native": "0.63.4",
-    "moment": "^2.28.0",
-    "axios": "0.19.0",
+    "react-native-app-auth": "^6.0.2",
     "react-native-gesture-handler": "^1.9.0",
     "react-native-nodemediaclient": "^0.2.14",
     "react-native-reanimated": "^1.13.2",
