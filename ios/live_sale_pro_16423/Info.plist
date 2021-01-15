@@ -91,5 +91,16 @@
 	<string>Livesale requires access to your phone’s camera.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Livesale requires access to your phone’s Microphone.</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.crowdbotics.live-sale-pro-16423</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>lspencoderapp</string>
+      </array>
+    </dict>
+  </array>
 </dict>
 </plist>
