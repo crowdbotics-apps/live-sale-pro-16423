@@ -19,19 +19,9 @@ import {
 import { NodeCameraView } from 'react-native-nodemediaclient';
 import moment from 'moment';
 import StopConfirmationModal from '../components/StopConfirmationModal';
-
-const MENU_ICON = require('../../assets/images/menu.png');
-const SETTINGS_ICON = require('../../assets/images/settings.png');
-const FLASH_ICON = require('../../assets/images/flash.png');
-const FLASH_OFF_ICON = require('../../assets/images/noflash.png');
-
-const MICROPHONE_ICON = require('../../assets/images/microphone.png');
-const MICROPHONE_OFF_ICON = require('../../assets/images/nomicrophone.png');
-
-const CHECKBOX_OFF_ICON = require('../../assets/images/checkbox_off.png');
-const CHECKBOX_ICON = require('../../assets/images/checkbox.png');
-
-const LOGOUT_ICON = require('../../assets/images/logout.png');
+import routes from '../navigation/routes';
+import { logout } from '../api/auth';
+import Images from '../utils/Images';
 
 const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
 const stream = 'ea0c69ca';
@@ -57,8 +47,7 @@ const RESOLUTIONS = [
 ];
 
 const formatSeconds = (seconds) =>
-    moment
-        .utc(moment.duration(seconds, 'seconds').as('milliseconds'))
+    moment.utc(moment.duration(seconds, 'seconds').as('milliseconds'))
         .format(seconds >= 3600 ? 'HH:mm:ss' : 'mm:ss');
 
 const NavigationButton = ({ onPress, iconSource, active }) => (
@@ -113,6 +102,7 @@ const RecordingTime = ({ recordStartTime }) => {
 };
 
 export default function HomeScreen({ navigation }) {
+    
     const cameraRef = useRef();
     const [isRecording, setIsRecording] = useState(false);
     const [recordStartTime, setRecordStartTime] = useState(false);
@@ -125,7 +115,8 @@ export default function HomeScreen({ navigation }) {
         backCamera: false,
         resolution: RESOLUTIONS[RESOLUTIONS.length - 1],
     });
-    const toggleOption = (option) => {
+
+    const toggleOption = (option: any) => {
         console.log('toggleOption');
         if (option === 'backCamera' && options.backCamera) {
             // switch off flash state when switching to front camera
@@ -141,12 +132,14 @@ export default function HomeScreen({ navigation }) {
             });
         }
     };
+
     const setResolution = (resolution) => {
         setOptions({
             ...options,
             resolution,
         });
     };
+
     const toggleStream = () => {
         console.log('toggleStream', isRecording);
         setIsLeftMenuActive(false);
@@ -160,12 +153,24 @@ export default function HomeScreen({ navigation }) {
             cameraRef.current && cameraRef.current.start();
         }
     };
+
     const stopStream = () => {
         setIsRecording(false);
         setRecordStartTime();
         setIsStopModalVisible(false);
         cameraRef.current && cameraRef.current.stop();
     };
+
+    const handleLogout = () => {
+        const completion = () => {
+            navigation.replace(routes.LOGIN)
+        }
+
+        logout()
+        .then(completion)
+        .catch(completion)
+    }
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerLeft: () => (
@@ -174,7 +179,7 @@ export default function HomeScreen({ navigation }) {
                         setIsLeftMenuActive(!isLeftMenuActive);
                         setIsRightMenuActive(false);
                     }}
-                    iconSource={MENU_ICON}
+                    iconSource={Images.MENU_ICON}
                     active={isLeftMenuActive}
                 />
             ),
@@ -184,12 +189,13 @@ export default function HomeScreen({ navigation }) {
                         setIsRightMenuActive(!isRightMenuActive);
                         setIsLeftMenuActive(false);
                     }}
-                    iconSource={SETTINGS_ICON}
+                    iconSource={Images.SETTINGS_ICON}
                     active={isRightMenuActive}
                 />
             ),
         });
     }, [navigation, isLeftMenuActive, isRightMenuActive]);
+
     return (
         <TouchableWithoutFeedback
             onPress={() => {
@@ -235,8 +241,8 @@ export default function HomeScreen({ navigation }) {
                 {isLeftMenuActive && (
                     <View style={[styles.menu]}>
                         <MenuItem
-                            onPress={() => { navigation.popToTop() }}
-                            iconSource={LOGOUT_ICON}
+                            onPress={() => { handleLogout() }}
+                            iconSource={Images.LOGOUT_ICON}
                             label={'Log out'}
                         />
                     </View>
@@ -248,7 +254,7 @@ export default function HomeScreen({ navigation }) {
                                 toggleOption('sound');
                                 // cameraRef.current && cameraRef.current.switchCamera();
                             }}
-                            iconSource={options.sound ? MICROPHONE_ICON : MICROPHONE_OFF_ICON}
+                            iconSource={options.sound ? Images.MICROPHONE_ICON : Images.MICROPHONE_OFF_ICON}
                             label={options.sound ? 'Sound ON' : 'Sound OFF'}
                         />
                         <MenuItem
@@ -263,7 +269,7 @@ export default function HomeScreen({ navigation }) {
                                     cameraRef.current.flashEnable(!options.flash);
                             }}
                             disabled={!options.backCamera}
-                            iconSource={options.flash ? FLASH_ICON : FLASH_OFF_ICON}
+                            iconSource={options.flash ? Images.FLASH_ICON : Images.FLASH_OFF_ICON}
                             label={options.flash ? 'Flash ON' : 'Flash OFF'}
                         />
                         <MenuItem
@@ -274,7 +280,7 @@ export default function HomeScreen({ navigation }) {
                                 }
                             }}
                             iconSource={
-                                options.backCamera ? CHECKBOX_ICON : CHECKBOX_OFF_ICON
+                                options.backCamera ? Images.CHECKBOX_ICON : Images.CHECKBOX_OFF_ICON
                             }
                             label="Back Camera"
                         />
@@ -286,7 +292,7 @@ export default function HomeScreen({ navigation }) {
                                 }
                             }}
                             iconSource={
-                                options.backCamera ? CHECKBOX_OFF_ICON : CHECKBOX_ICON
+                                options.backCamera ? Images.CHECKBOX_OFF_ICON : Images.CHECKBOX_ICON
                             }
                             label="Front Camera"
                         />
@@ -301,8 +307,8 @@ export default function HomeScreen({ navigation }) {
                                         }}
                                         iconSource={
                                             options.resolution.preset === resolution.preset
-                                                ? CHECKBOX_ICON
-                                                : CHECKBOX_OFF_ICON
+                                                ? Images.CHECKBOX_ICON
+                                                : Images.CHECKBOX_OFF_ICON
                                         }
                                         label={resolution.label}
                                     />
