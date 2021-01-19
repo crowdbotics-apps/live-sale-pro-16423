@@ -22,6 +22,9 @@ import StopConfirmationModal from '../components/StopConfirmationModal';
 import routes from '../navigation/routes';
 import { logout } from '../api/auth';
 import Images from '../utils/Images';
+import MenuItem from '../components/MenuItem';
+import StreamListItem from '../components/StreamListItem';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
 const stream = 'ea0c69ca';
@@ -58,25 +61,6 @@ const NavigationButton = ({ onPress, iconSource, active }) => (
     </TouchableOpacity>
 );
 
-const MenuItem = ({ onPress, iconSource, label, disabled, separator }) => {
-    const Wrapper = separator || disabled ? View : TouchableOpacity;
-    return (
-        <Wrapper
-            onPress={disabled ? () => { } : onPress}
-            style={[styles.menuRow, separator && styles.menuRowSeparator]}>
-            {iconSource && (
-                <View style={[styles.menuImgWrapper, disabled ? { opacity: 0.6 } : null]}>
-                    <Image source={iconSource} style={styles.menuImg} />
-                </View>
-            )}
-
-            <Text style={[styles.menuText, disabled ? { opacity: 0.6 } : null]}>
-                {label}
-            </Text>
-        </Wrapper>
-    );
-};
-
 const RecordingTime = ({ recordStartTime }) => {
     const [recordingTime, setRecordingTime] = useState();
 
@@ -105,10 +89,12 @@ export default function HomeScreen({ navigation }) {
     
     const cameraRef = useRef();
     const [isRecording, setIsRecording] = useState(false);
-    const [recordStartTime, setRecordStartTime] = useState(false);
+    const [recordStartTime, setRecordStartTime] = useState(0);
     const [isRightMenuActive, setIsRightMenuActive] = useState(false);
     const [isLeftMenuActive, setIsLeftMenuActive] = useState(false);
+    const [isBottomMenuActive, setIsBottomMenuActive] = useState(false);
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
+    const [expandedStreamId, setExpandedStreamId] = useState(0);
     const [options, setOptions] = useState({
         sound: true,
         flash: false,
@@ -144,6 +130,7 @@ export default function HomeScreen({ navigation }) {
         console.log('toggleStream', isRecording);
         setIsLeftMenuActive(false);
         setIsRightMenuActive(false);
+        setIsBottomMenuActive(false);
         LayoutAnimation.easeInEaseOut();
         if (isRecording) {
             setIsStopModalVisible(true);
@@ -156,7 +143,7 @@ export default function HomeScreen({ navigation }) {
 
     const stopStream = () => {
         setIsRecording(false);
-        setRecordStartTime();
+        setRecordStartTime(0);
         setIsStopModalVisible(false);
         cameraRef.current && cameraRef.current.stop();
     };
@@ -171,6 +158,12 @@ export default function HomeScreen({ navigation }) {
         .catch(completion)
     }
 
+    const showMyStreams = () => {
+        setIsRightMenuActive(false)
+        setIsLeftMenuActive(false)
+        setIsBottomMenuActive(!isBottomMenuActive)
+    }
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerLeft: () => (
@@ -178,6 +171,7 @@ export default function HomeScreen({ navigation }) {
                     onPress={() => {
                         setIsLeftMenuActive(!isLeftMenuActive);
                         setIsRightMenuActive(false);
+                        setIsBottomMenuActive(false);
                     }}
                     iconSource={Images.MENU_ICON}
                     active={isLeftMenuActive}
@@ -188,6 +182,7 @@ export default function HomeScreen({ navigation }) {
                     onPress={() => {
                         setIsRightMenuActive(!isRightMenuActive);
                         setIsLeftMenuActive(false);
+                        setIsBottomMenuActive(false);
                     }}
                     iconSource={Images.SETTINGS_ICON}
                     active={isRightMenuActive}
@@ -201,6 +196,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => {
                 setIsLeftMenuActive(false);
                 setIsRightMenuActive(false);
+                setIsBottomMenuActive(false);
             }}>
             <View style={styles.container}>
                 <NodeCameraView
@@ -226,7 +222,7 @@ export default function HomeScreen({ navigation }) {
                     }}
                     smoothSkinLevel={3}
                     autopreview={true}
-                    onStatus={(code, msg) => {
+                    onStatus={(code: any, msg: string) => {
                         if (code === 2002) {
                             stopStream();
                             Alert.alert(
@@ -240,6 +236,11 @@ export default function HomeScreen({ navigation }) {
                 />
                 {isLeftMenuActive && (
                     <View style={[styles.menu]}>
+                        <MenuItem
+                            onPress={() => { showMyStreams() }}
+                            iconSource={Images.FLASH_ICON}
+                            label={'My Streams'}
+                        />
                         <MenuItem
                             onPress={() => { handleLogout() }}
                             iconSource={Images.LOGOUT_ICON}
@@ -298,7 +299,9 @@ export default function HomeScreen({ navigation }) {
                         />
                         {!isRecording && (
                             <>
-                                <MenuItem separator={true} label="Resolution" />
+                                <MenuItem 
+                                    separator={true} 
+                                    label="Resolution" />
                                 {RESOLUTIONS.map((resolution) => (
                                     <MenuItem
                                         key={'r-' + resolution.preset}
@@ -329,7 +332,34 @@ export default function HomeScreen({ navigation }) {
                         </Text>
                     </TouchableOpacity>
                 </View>
-
+                {isBottomMenuActive && (
+                    <ScrollView style={[styles.bottomMenu]}>
+                        <StreamListItem
+                            onPress={() => { 
+                                expandedStreamId === 1 ? setExpandedStreamId(0) : setExpandedStreamId(1)
+                            }}
+                            date={'January 18, 2020'}
+                            time={'11:30 am'}
+                            isExpanded={expandedStreamId == 1}
+                        />
+                        <StreamListItem
+                            onPress={() => { 
+                                expandedStreamId === 2 ? setExpandedStreamId(0) : setExpandedStreamId(2)
+                            }}
+                            date={'January 18, 2020'}
+                            time={'11:30 am'}
+                            isExpanded={expandedStreamId == 2}
+                        />
+                        <StreamListItem
+                            onPress={() => { 
+                                expandedStreamId === 3 ? setExpandedStreamId(0) : setExpandedStreamId(3)
+                            }}
+                            date={'January 18, 2020'}
+                            time={'11:30 am'}
+                            isExpanded={expandedStreamId == 3}
+                        />
+                    </ScrollView>
+                )}
                 <StopConfirmationModal
                     onStopStream={stopStream}
                     onStopStreamFacebook={stopStream}
@@ -396,29 +426,11 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
     },
-    menuImgWrapper: {
-        width: 64,
-        height: 64,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    menuRow: {
-        height: 80,
+    bottomMenu: {
         width: '100%',
-        flexDirection: 'row',
-        borderBottomColor: '#CB396B',
-        borderBottomWidth: 1,
-        alignItems: 'center',
-    },
-    menuText: {
-        // fontFamily: 'Robot, sans-serif',
-        fontSize: 16,
-        fontWeight: '500',
-        lineHeight: 40,
-        color: 'white',
-    },
-    menuRowSeparator: {
-        backgroundColor: '#464646',
-        paddingLeft: 24,
+        backgroundColor: '#BA1F5C',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
     },
 });

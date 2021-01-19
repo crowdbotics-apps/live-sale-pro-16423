@@ -2,11 +2,7 @@ import React, { useState } from 'react'
 import { Image, SafeAreaView, Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native'
 import { authenticateUser } from "../api/auth"
 import routes from '../navigation/routes';
-
-enum Colors {
-    Pink = '#d73776',
-    White = '#fff'
-}
+import Colors from '../utils/Colors';
 
 export default function Signin({ navigation }) {
 
