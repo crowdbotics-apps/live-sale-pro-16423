@@ -6,7 +6,7 @@ const StreamListItem = ({ onPress = {}, date = '', time = '', disabled = false, 
     return (
         <TouchableOpacity
             onPress={disabled ? () => { } : onPress}
-            style={[styles.menuRow, separator && styles.menuRowSeparator]}>
+            style={[styles.menuRow, separator && styles.menuRowSeparator, isExpanded && styles.expandedMenuRow]}>
             <View style={styles.dateContainer}>
                 <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>
                     {date}
@@ -39,6 +39,9 @@ const styles = StyleSheet.create({
         borderBottomColor: '#CB396B',
         borderBottomWidth: 1,
         // alignItems: 'center',
+    },
+    expandedMenuRow: {
+        backgroundColor: Colors.DarkPink
     },
     dateContainer: {
         flexDirection: 'row',
