@@ -26,7 +26,7 @@ const theme = {
 const RootNavigator = () => {
     return (
         <NavigationContainer theme={theme}>
-            <Stack.Navigator initialRouteName={routes.HOME}>
+            <Stack.Navigator initialRouteName={routes.LOGIN}>
                 <Stack.Screen
                     name={routes.HOME}
                     component={Home}
