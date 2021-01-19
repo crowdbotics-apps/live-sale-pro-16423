@@ -1,45 +1,28 @@
 import React, { useState } from 'react'
-import { Image, SafeAreaView, Text, TextInput, TouchableOpacity, View, Button, StyleSheet, TextInputProps } from 'react-native'
-import { request } from '../api/apiClient'
+import { Image, SafeAreaView, Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native'
+import { authenticateUser } from "../api/auth"
+import routes from '../navigation/routes';
 
 enum Colors {
     Pink = '#d73776',
     White = '#fff'
 }
 
-const UnderlinedInput = ({ title, ...props }: TextInputProps & { title: string }) => (
-    <View style={{ width: '100%' }}>
-        <View style={styles.inputContainer}>
-            <View style={{ minWidth: 100 }}>
-                <Text style={styles.inputLabel}>{title}</Text>
-            </View>
-            <View style={{ flexGrow: 1 }}>
-                <TextInput style={styles.inputText} {...props} />
-            </View>
-        </View>
-    </View>
-)
-
 export default function Signin({ navigation }) {
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = () => {
-        console.log("handleLogin", email, password);
-        navigation.push('Home')
+        
+        setLoading(true)
+        const completion = () => {
+            setLoading(false)
+            navigation.replace(routes.HOME)
+        }
 
-        // request.post('/api/v1/login/', {
-        //     email,
-        //     password,
-        // })
-        // .then(function (response) {
-        //     console.log(response);
-        //     navigation.push('Home')
-        // })
-        // .catch(function (error) {
-        //     console.log(error)
-        // })
+        authenticateUser()
+            ?.then(completion)
+            ?.catch(completion)
     }
 
     return (
@@ -54,32 +37,12 @@ export default function Signin({ navigation }) {
                         <Text style={{ fontSize: 24, fontFamily: 'Barlow', fontWeight: '400' }}>Welcome to </Text>
                         <Text style={{ fontSize: 24, fontFamily: 'Barlow', fontWeight: '700' }}>Live Stream</Text>
                     </View>
-
-                    <Text style={{ fontSize: 18, fontFamily: 'Barlow' }}>Sign in</Text>
-
-                    <View style={{ paddingHorizontal: 40 }}>
-                        <UnderlinedInput 
-                        title="Email" 
-                        textContentType="emailAddress" 
-                        autoCapitalize="none" 
-                        onChangeText={text => { setEmail(text) }} />
-                    </View>
-                    <View style={{ paddingHorizontal: 40 }}>
-                        <UnderlinedInput 
-                        title="Password" 
-                        secureTextEntry={true} 
-                        textContentType="password"
-                        onChangeText={text => { setPassword(text) }}  />
-                    </View>
-                    <View style={{ paddingVertical: 12 }}>
-                        <View style={{ flexDirection: 'row' }}>
-                            <Text style={{ fontFamily: 'Roboto', fontWeight: '400', fontSize: 16 }}>I forgot my password, </Text>
-                            <TouchableOpacity><Text style={{ fontFamily: 'Roboto', fontWeight: '700', fontSize: 16, color: '#0084FE' }}>Reset password</Text></TouchableOpacity>
-                        </View>
-                    </View>
+                    <Text style={{ fontSize: 18, fontFamily: 'Barlow' }}>Sign In</Text>
                 </View>
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={() => { handleLogin() }}><Text style={styles.buttonText}>Sign In</Text></TouchableOpacity>
+                    { loading ? <ActivityIndicator animating={true} color={Colors.Pink} /> :
+                    <TouchableOpacity style={styles.button} onPress={() => { handleLogin() }}><Text style={styles.buttonText}>Sign In</Text></TouchableOpacity> 
+                    }
                 </View>
             </SafeAreaView>
         </View>
@@ -89,9 +52,9 @@ export default function Signin({ navigation }) {
 const styles = StyleSheet.create({
     button: {
         backgroundColor: Colors.Pink,
-        borderRadius: 20,
-        height: 40,
-        paddingVertical: 10
+        borderRadius: 25,
+        height: 50,
+        paddingVertical: 15
     },
     buttonText: {
         color: Colors.White,

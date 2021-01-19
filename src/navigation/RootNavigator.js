@@ -8,9 +8,10 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Signin from '../pages/Signin'
 import Home from '../pages/Home';
+import routes from './routes';
 
 const Stack = createStackNavigator();
-const Theme = {
+const theme = {
     ...DefaultTheme,
     dark: false,
     colors: {
@@ -23,13 +24,11 @@ const Theme = {
 };
 
 const RootNavigator = () => {
-    console.log("root navigator")
-    const signedIn = true;
     return (
-        <NavigationContainer theme={Theme}>
-            <Stack.Navigator initialRouteName="SignIn">
+        <NavigationContainer theme={theme}>
+            <Stack.Navigator initialRouteName={routes.LOGIN}>
                 <Stack.Screen
-                    name="Home"
+                    name={routes.HOME}
                     component={Home}
                     options={{
                         title: 'Live Stream',
@@ -41,10 +40,13 @@ const RootNavigator = () => {
                     }}
                 />
                 <Stack.Screen
-                    name="SignIn"
+                    name={routes.LOGIN}
                     component={Signin}
-                    options={{ headerShown: false }} />
-
+                    options={{ 
+                        headerShown: false,
+                        animationTypeForReplace: 'pop'
+                    }} 
+                />
             </Stack.Navigator>
         </NavigationContainer>
     );
