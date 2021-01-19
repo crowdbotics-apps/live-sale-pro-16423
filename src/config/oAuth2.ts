@@ -4,7 +4,7 @@ const oAuth2Config = {
     clientId: 'lsp-encoder-app',
     redirectUrl: 'lspencoderapp:/oauth',
     scopes: ['openid','offline'],
-    clientSecret: '7oOKfHDCvtMc9txjlzpYxHhVms1bWYjT'
+    clientSecret: '<Add ClientSecret here>'
 };
 
 export default oAuth2Config
