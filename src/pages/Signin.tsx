@@ -2,11 +2,7 @@ import React, { useState } from 'react'
 import { Image, SafeAreaView, Text, TouchableOpacity, View, StyleSheet, ActivityIndicator } from 'react-native'
 import { authenticateUser } from "../api/auth"
 import routes from '../navigation/routes';
-
-enum Colors {
-    Pink = '#d73776',
-    White = '#fff'
-}
+import Colors from '../utils/Colors';
 
 export default function Signin({ navigation }) {
 
@@ -27,7 +23,7 @@ export default function Signin({ navigation }) {
 
     return (
         <View style={{ flex: 1 }}>
-            <SafeAreaView style={{ flex: 0, backgroundColor: Colors.Pink }} />
+            <SafeAreaView style={{ flex: 0, backgroundColor: Colors.LightPink }} />
             <SafeAreaView style={{ flex: 1 }} >
                 <View style={{ backgroundColor: '#D73776', flexGrow: 0.2, justifyContent: 'center', alignItems: 'center' }}>
                     <Image source={require('../../assets/images/logo.png')} />
@@ -51,7 +47,7 @@ export default function Signin({ navigation }) {
 
 const styles = StyleSheet.create({
     button: {
-        backgroundColor: Colors.Pink,
+        backgroundColor: Colors.LightPink,
         borderRadius: 25,
         height: 50,
         paddingVertical: 15
