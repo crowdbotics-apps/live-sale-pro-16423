@@ -38,7 +38,6 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         borderBottomColor: '#CB396B',
         borderBottomWidth: 1,
-        // alignItems: 'center',
     },
     expandedMenuRow: {
         backgroundColor: Colors.DarkPink
@@ -61,6 +60,7 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         lineHeight: 28,
         color: 'white',
+        textAlign: 'center'
     },
     boldedMessageText: {
         fontFamily: 'Roboto',
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         lineHeight: 28,
         color: 'white',
+        textAlign: 'center'
     },
     menuRowSeparator: {
         backgroundColor: '#464646',
@@ -81,7 +82,8 @@ const styles = StyleSheet.create({
     },
     expandedContainer: {
         padding: 45,
-        paddingTop: 0
+        paddingTop: 0,
+        alignContent:'center'
     },
     button: {
         backgroundColor: Colors.White,

@@ -25,7 +25,7 @@ import { logout } from '../api/auth';
 import Images from '../utils/Images';
 import MenuItem from '../components/MenuItem';
 import StreamListItem from '../components/StreamListItem';
-import { ScrollView } from 'react-native-gesture-handler';
+import { FlatList } from 'react-native-gesture-handler';
 import { useQuery, useLazyQuery } from '@apollo/client'
 import { GET_SHOP_ID, GET_LIVE_SALES_EVENTS } from '../api/queries';
 import Colors from '../utils/Colors';
@@ -90,7 +90,7 @@ const RecordingTime = ({ recordStartTime }) => {
 };
 
 export default function HomeScreen({ navigation }) {
-    
+
     const cameraRef = useRef();
     const [isRecording, setIsRecording] = useState(false);
     const [recordStartTime, setRecordStartTime] = useState(0);
@@ -161,8 +161,8 @@ export default function HomeScreen({ navigation }) {
         }
 
         logout()
-        .then(completion)
-        .catch(completion)
+            .then(completion)
+            .catch(completion)
     }
 
     const showMyStreams = () => {
@@ -204,7 +204,7 @@ export default function HomeScreen({ navigation }) {
             getLiveSales({ variables: { shopId: shopIdResponse.data.primaryShopId } })
         }
     }, [])
-    
+
     if (shopIdResponse.loading) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
     } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
@@ -212,6 +212,17 @@ export default function HomeScreen({ navigation }) {
         console.log("LIVE SALES: ", liveSalesResponse.data)
         console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
     }
+
+    const renderBottomMenuItem = ({ item }) => (
+        <StreamListItem
+            onPress={() => {
+                expandedStreamId === item.id ? setExpandedStreamId(0) : setExpandedStreamId(item.id)
+            }}
+            date={item.date}
+            time={item.time}
+            isExpanded={expandedStreamId == item.id}
+        />
+    );
 
     return (
         <TouchableWithoutFeedback
@@ -321,8 +332,8 @@ export default function HomeScreen({ navigation }) {
                         />
                         {!isRecording && (
                             <>
-                                <MenuItem 
-                                    separator={true} 
+                                <MenuItem
+                                    separator={true}
                                     label="Resolution" />
                                 {RESOLUTIONS.map((resolution) => (
                                     <MenuItem
@@ -355,32 +366,16 @@ export default function HomeScreen({ navigation }) {
                     </TouchableOpacity>
                 </View>
                 {isBottomMenuActive && (
-                    <ScrollView style={[styles.bottomMenu]}>
-                        <StreamListItem
-                            onPress={() => { 
-                                expandedStreamId === 1 ? setExpandedStreamId(0) : setExpandedStreamId(1)
-                            }}
-                            date={'January 18, 2020'}
-                            time={'11:30 am'}
-                            isExpanded={expandedStreamId == 1}
-                        />
-                        <StreamListItem
-                            onPress={() => { 
-                                expandedStreamId === 2 ? setExpandedStreamId(0) : setExpandedStreamId(2)
-                            }}
-                            date={'January 18, 2020'}
-                            time={'11:30 am'}
-                            isExpanded={expandedStreamId == 2}
-                        />
-                        <StreamListItem
-                            onPress={() => { 
-                                expandedStreamId === 3 ? setExpandedStreamId(0) : setExpandedStreamId(3)
-                            }}
-                            date={'January 18, 2020'}
-                            time={'11:30 am'}
-                            isExpanded={expandedStreamId == 3}
-                        />
-                    </ScrollView>
+                    <FlatList
+                        style={[styles.bottomMenu]}
+                        data={[
+                            { id: 1, date: 'Jan 18, 2020', time: '11:30 am' },
+                            { id: 2, date: 'Feb 18, 2020', time: '11:30 am' },
+                            { id: 3, date: 'Mar 18, 2020', time: '11:30 am' },
+                        ]}
+                        renderItem={renderBottomMenuItem}
+                        keyExtractor={(item) => item.id.toString()}
+                    />
                 )}
                 <StopConfirmationModal
                     onStopStream={stopStream}
