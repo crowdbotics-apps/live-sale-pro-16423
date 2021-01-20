@@ -15,6 +15,7 @@ import {
     TouchableWithoutFeedback,
     LayoutAnimation,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { NodeCameraView } from 'react-native-nodemediaclient';
 import moment from 'moment';
@@ -25,6 +26,9 @@ import Images from '../utils/Images';
 import MenuItem from '../components/MenuItem';
 import StreamListItem from '../components/StreamListItem';
 import { ScrollView } from 'react-native-gesture-handler';
+import { useQuery, useLazyQuery } from '@apollo/client'
+import { GET_SHOP_ID, GET_LIVE_SALES_EVENTS } from '../api/queries';
+import Colors from '../utils/Colors';
 
 const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
 const stream = 'ea0c69ca';
@@ -95,6 +99,9 @@ export default function HomeScreen({ navigation }) {
     const [isBottomMenuActive, setIsBottomMenuActive] = useState(false);
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
     const [expandedStreamId, setExpandedStreamId] = useState(0);
+    const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
+    const [getLiveSales, liveSalesResponse] = useLazyQuery(GET_LIVE_SALES_EVENTS);
+
     const [options, setOptions] = useState({
         sound: true,
         flash: false,
@@ -190,6 +197,21 @@ export default function HomeScreen({ navigation }) {
             ),
         });
     }, [navigation, isLeftMenuActive, isRightMenuActive]);
+
+    useEffect(() => {
+        getShopId()
+        if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
+            getLiveSales({ variables: { shopId: shopIdResponse.data.primaryShopId } })
+        }
+    }, [])
+    
+    if (shopIdResponse.loading) {
+        return <ActivityIndicator size="large" color={Colors.Pink} />
+    } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
+        console.log("SHOP ID: ", shopIdResponse.data)
+        console.log("LIVE SALES: ", liveSalesResponse)
+        console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
+    }
 
     return (
         <TouchableWithoutFeedback
