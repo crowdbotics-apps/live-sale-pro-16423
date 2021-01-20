@@ -209,7 +209,7 @@ export default function HomeScreen({ navigation }) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
     } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
         console.log("SHOP ID: ", shopIdResponse.data)
-        console.log("LIVE SALES: ", liveSalesResponse)
+        console.log("LIVE SALES: ", liveSalesResponse.data)
         console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
     }
 
