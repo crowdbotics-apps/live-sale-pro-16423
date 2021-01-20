@@ -161,11 +161,12 @@ export default function HomeScreen({ navigation }) {
         }
 
         logout()
-            .then(completion)
-            .catch(completion)
+        .then(completion)
+        .catch(completion)
     }
 
     const showMyStreams = () => {
+        LayoutAnimation.easeInEaseOut();
         setIsRightMenuActive(false)
         setIsLeftMenuActive(false)
         setIsBottomMenuActive(!isBottomMenuActive)
@@ -205,14 +206,6 @@ export default function HomeScreen({ navigation }) {
         }
     }, [])
 
-    if (shopIdResponse.loading) {
-        return <ActivityIndicator size="large" color={Colors.Pink} />
-    } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
-        console.log("SHOP ID: ", shopIdResponse.data)
-        console.log("LIVE SALES: ", liveSalesResponse.data)
-        console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
-    }
-
     const renderBottomMenuItem = ({ item }) => (
         <StreamListItem
             onPress={() => {
@@ -223,6 +216,14 @@ export default function HomeScreen({ navigation }) {
             isExpanded={expandedStreamId == item.id}
         />
     );
+
+    if (shopIdResponse.loading) {
+        return <ActivityIndicator size="large" color={Colors.Pink} />
+    } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
+        console.log("SHOP ID: ", shopIdResponse.data)
+        console.log("LIVE SALES: ", liveSalesResponse)
+        console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
+    }
 
     return (
         <TouchableWithoutFeedback
@@ -365,18 +366,20 @@ export default function HomeScreen({ navigation }) {
                         </Text>
                     </TouchableOpacity>
                 </View>
-                {isBottomMenuActive && (
-                    <FlatList
-                        style={[styles.bottomMenu]}
-                        data={[
-                            { id: 1, date: 'Jan 18, 2020', time: '11:30 am' },
-                            { id: 2, date: 'Feb 18, 2020', time: '11:30 am' },
-                            { id: 3, date: 'Mar 18, 2020', time: '11:30 am' },
-                        ]}
-                        renderItem={renderBottomMenuItem}
-                        keyExtractor={(item) => item.id.toString()}
-                    />
-                )}
+                <View style={[styles.bottomMenu]}>
+                    {isBottomMenuActive && (
+                        <FlatList
+                            data={[
+                                { id: 1, date: 'Jan 18, 2020', time: '11:30 am' },
+                                { id: 2, date: 'Feb 18, 2020', time: '11:30 am' },
+                                { id: 3, date: 'Mar 18, 2020', time: '11:30 am' },
+                                { id: 4, date: 'Apr 18, 2020', time: '11:30 am' },
+                            ]}
+                            renderItem={renderBottomMenuItem}
+                            keyExtractor={(item) => item.id.toString()}
+                        />
+                    )}
+                </View>
                 <StopConfirmationModal
                     onStopStream={stopStream}
                     onStopStreamFacebook={stopStream}

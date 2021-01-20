@@ -18,7 +18,7 @@ const StreamListItem = ({ onPress = {}, date = '', time = '', disabled = false, 
             {isExpanded && (
                 <View style={styles.expandedContainer}>
                     <Text style={[styles.messageText, disabled ? { opacity: 0.6 } : null]}>
-                        {'Start your broadcast using this stream. Setup will require few minutes to start.'}
+                        {'Start your broadcast using this stream. Setup will require a few minutes to start.'}
                     </Text>
                     <Text style={[styles.boldedMessageText, disabled ? { opacity: 0.6 } : null]}>
                         {'Thank you for your patience.'}
