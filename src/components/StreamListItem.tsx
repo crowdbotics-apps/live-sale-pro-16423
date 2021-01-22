@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Image, TouchableOpacity, Text } from 'react-native';
 import Colors from '../utils/Colors';
 
-const StreamListItem = ({ onPress = {}, date = '', time = '', disabled = false, separator = false, isExpanded = false }) => {
+const StreamListItem = ({ 
+    onPress = {}, 
+    date = '', 
+    time = '', 
+    disabled = false, 
+    separator = false, 
+    isExpanded = false,
+    onStart }) => {
     return (
         <TouchableOpacity
             onPress={disabled ? () => { } : onPress}
@@ -23,7 +30,7 @@ const StreamListItem = ({ onPress = {}, date = '', time = '', disabled = false, 
                     <Text style={[styles.boldedMessageText, disabled ? { opacity: 0.6 } : null]}>
                         {'Thank you for your patience.'}
                     </Text>
-                    <TouchableOpacity style={styles.button} onPress={() => { }}><Text style={styles.buttonText}>Select</Text></TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => { onStart() }}><Text style={styles.buttonText}>Select</Text></TouchableOpacity>
                 </View>
             )}
         </TouchableOpacity>

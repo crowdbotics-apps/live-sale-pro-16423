@@ -26,8 +26,11 @@ import Images from '../utils/Images';
 import MenuItem from '../components/MenuItem';
 import StreamListItem from '../components/StreamListItem';
 import { FlatList } from 'react-native-gesture-handler';
-import { useQuery, useLazyQuery } from '@apollo/client'
-import { GET_SHOP_ID, GET_LIVE_SALES_EVENTS } from '../api/queries';
+import { useLazyQuery, useMutation } from '@apollo/client'
+import { 
+    GET_SHOP_ID, 
+    GET_LIVE_SALES_EVENTS,
+    CREATE_INGEST_SERVER } from '../api/queries';
 import Colors from '../utils/Colors';
 
 const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
@@ -101,6 +104,7 @@ export default function HomeScreen({ navigation }) {
     const [expandedStreamId, setExpandedStreamId] = useState(0);
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
     const [getLiveSales, liveSalesResponse] = useLazyQuery(GET_LIVE_SALES_EVENTS);
+    const [createIngestServer, createIngestServerResponse] = useMutation(CREATE_INGEST_SERVER);
 
     const [options, setOptions] = useState({
         sound: true,
@@ -201,21 +205,36 @@ export default function HomeScreen({ navigation }) {
 
     useEffect(() => {
         getShopId()
+    }, [])
+
+    useEffect(() => {
         if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
             getLiveSales({ variables: { shopId: shopIdResponse.data.primaryShopId } })
         }
-    }, [])
+    }, [shopIdResponse])
 
-    const renderBottomMenuItem = ({ item }) => (
-        <StreamListItem
+    const renderBottomMenuItem = ({ item }) => {
+        const onStart = () => {
+            console.log("Starting Ingest server with ID: ", item.id)
+            // const params = { 
+            //     input: {
+            //         shopId: shopIdResponse.data.primaryShopId
+            //     }
+            // }
+            // createIngestServer({ variables: params })
+            // console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
+        }
+
+        return <StreamListItem
             onPress={() => {
                 expandedStreamId === item.id ? setExpandedStreamId(0) : setExpandedStreamId(item.id)
             }}
             date={item.date}
             time={item.time}
             isExpanded={expandedStreamId == item.id}
+            onStart={onStart}
         />
-    );
+    };
 
     if (shopIdResponse.loading) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
