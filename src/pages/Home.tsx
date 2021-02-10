@@ -25,12 +25,13 @@ import { logout } from '../api/auth';
 import Images from '../utils/Images';
 import MenuItem from '../components/MenuItem';
 import StreamListItem from '../components/StreamListItem';
-import { FlatList } from 'react-native-gesture-handler';
+import { FlatList, ScrollView } from 'react-native-gesture-handler';
 import { useLazyQuery, useMutation } from '@apollo/client'
-import { 
-    GET_SHOP_ID, 
+import {
+    GET_SHOP_ID,
     GET_LIVE_SALES_EVENTS,
-    CREATE_INGEST_SERVER } from '../api/queries';
+    CREATE_INGEST_SERVER
+} from '../api/queries';
 import Colors from '../utils/Colors';
 
 const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
@@ -94,6 +95,17 @@ const RecordingTime = ({ recordStartTime }) => {
 
 export default function HomeScreen({ navigation }) {
 
+    type LivSalesRequest = { shopId: string }
+    type LiveSaleEvent = {
+        _id: number,
+        title: string
+        streamTarget: string,
+        startDate: string,
+        claimWord: string,
+        includedUrl: string
+    }
+    type LivSalesResponse = { liveSalesEvents: { nodes: Array<LiveSaleEvent> } }
+
     const cameraRef = useRef();
     const [isRecording, setIsRecording] = useState(false);
     const [recordStartTime, setRecordStartTime] = useState(0);
@@ -103,8 +115,10 @@ export default function HomeScreen({ navigation }) {
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
     const [expandedStreamId, setExpandedStreamId] = useState(0);
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
-    const [getLiveSales, liveSalesResponse] = useLazyQuery(GET_LIVE_SALES_EVENTS);
+    const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
     const [createIngestServer, createIngestServerResponse] = useMutation(CREATE_INGEST_SERVER);
+
+    const liveSales = liveSalesResponse.data?.liveSalesEvents?.nodes
 
     const [options, setOptions] = useState({
         sound: true,
@@ -165,8 +179,8 @@ export default function HomeScreen({ navigation }) {
         }
 
         logout()
-        .then(completion)
-        .catch(completion)
+            .then(completion)
+            .catch(completion)
     }
 
     const showMyStreams = () => {
@@ -213,25 +227,26 @@ export default function HomeScreen({ navigation }) {
         }
     }, [shopIdResponse])
 
-    const renderBottomMenuItem = ({ item }) => {
+    const renderBottomMenuItem = ({ item }: { item: LiveSaleEvent }) => {
         const onStart = () => {
-            console.log("Starting Ingest server with ID: ", item.id)
-            // const params = { 
-            //     input: {
-            //         shopId: shopIdResponse.data.primaryShopId
-            //     }
+            console.log("Starting Ingest server with ID: ", item._id)
+            // const params = {
+            //     input: { shopId: shopIdResponse.data.primaryShopId }
             // }
             // createIngestServer({ variables: params })
             // console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
         }
 
+        const date = moment(item.startDate).format('MMM DD yyyy')
+        const time = moment(item.startDate).format('hh:mm a')
+
         return <StreamListItem
             onPress={() => {
-                expandedStreamId === item.id ? setExpandedStreamId(0) : setExpandedStreamId(item.id)
+                expandedStreamId === item._id ? setExpandedStreamId(0) : setExpandedStreamId(item._id)
             }}
-            date={item.date}
-            time={item.time}
-            isExpanded={expandedStreamId == item.id}
+            date={date}
+            time={time}
+            isExpanded={expandedStreamId == item._id}
             onStart={onStart}
         />
     };
@@ -240,7 +255,7 @@ export default function HomeScreen({ navigation }) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
     } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
         console.log("SHOP ID: ", shopIdResponse.data)
-        console.log("LIVE SALES: ", liveSalesResponse)
+        console.log("LIVE SALES DATA: ", liveSales)
         console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
     }
 
@@ -292,6 +307,7 @@ export default function HomeScreen({ navigation }) {
                         <MenuItem
                             onPress={() => { showMyStreams() }}
                             iconSource={Images.FLASH_ICON}
+                            disabled={!liveSales}
                             label={'My Streams'}
                         />
                         <MenuItem
@@ -302,76 +318,74 @@ export default function HomeScreen({ navigation }) {
                     </View>
                 )}
                 {isRightMenuActive && (
-                    <View style={[styles.menu]}>
-                        <MenuItem
-                            onPress={() => {
-                                toggleOption('sound');
-                                // cameraRef.current && cameraRef.current.switchCamera();
-                            }}
-                            iconSource={options.sound ? Images.MICROPHONE_ICON : Images.MICROPHONE_OFF_ICON}
-                            label={options.sound ? 'Sound ON' : 'Sound OFF'}
-                        />
-                        <MenuItem
-                            onPress={() => {
-                                toggleOption('flash');
-                                console.log(
-                                    'toggleFlash',
-                                    !options.flash,
-                                    cameraRef.current?.flashEnable,
-                                );
-                                cameraRef.current &&
-                                    cameraRef.current.flashEnable(!options.flash);
-                            }}
-                            disabled={!options.backCamera}
-                            iconSource={options.flash ? Images.FLASH_ICON : Images.FLASH_OFF_ICON}
-                            label={options.flash ? 'Flash ON' : 'Flash OFF'}
-                        />
-                        <MenuItem
-                            onPress={() => {
-                                if (!options.backCamera) {
-                                    toggleOption('backCamera');
-                                    cameraRef.current && cameraRef.current.switchCamera();
-                                }
-                            }}
-                            iconSource={
-                                options.backCamera ? Images.CHECKBOX_ICON : Images.CHECKBOX_OFF_ICON
-                            }
-                            label="Back Camera"
-                        />
-                        <MenuItem
-                            onPress={() => {
-                                if (options.backCamera) {
-                                    toggleOption('backCamera');
-                                    cameraRef.current && cameraRef.current.switchCamera();
-                                }
-                            }}
-                            iconSource={
-                                options.backCamera ? Images.CHECKBOX_OFF_ICON : Images.CHECKBOX_ICON
-                            }
-                            label="Front Camera"
-                        />
-                        {!isRecording && (
-                            <>
-                                <MenuItem
-                                    separator={true}
-                                    label="Resolution" />
-                                {RESOLUTIONS.map((resolution) => (
+                    <ScrollView style={[styles.menu]}>
+                        <View>
+                            <MenuItem
+                                onPress={() => {
+                                    toggleOption('sound');
+                                    // cameraRef.current && cameraRef.current.switchCamera();
+                                }}
+                                iconSource={options.sound ? Images.MICROPHONE_ICON : Images.MICROPHONE_OFF_ICON}
+                                label={options.sound ? 'Sound ON' : 'Sound OFF'}
+                            />
+                            <MenuItem
+                                onPress={() => {
+                                    toggleOption('flash');
+                                    console.log(
+                                        'toggleFlash',
+                                        !options.flash,
+                                        cameraRef.current?.flashEnable,
+                                    );
+                                    cameraRef.current &&
+                                        cameraRef.current.flashEnable(!options.flash);
+                                }}
+                                disabled={!options.backCamera}
+                                iconSource={options.flash ? Images.FLASH_ICON : Images.FLASH_OFF_ICON}
+                                label={options.flash ? 'Flash ON' : 'Flash OFF'}
+                            />
+                            <MenuItem
+                                onPress={() => {
+                                    if (!options.backCamera) {
+                                        toggleOption('backCamera');
+                                        cameraRef.current && cameraRef.current.switchCamera();
+                                    }
+                                }}
+                                iconSource={options.backCamera ? Images.CHECKBOX_ICON : Images.CHECKBOX_OFF_ICON}
+                                label="Back Camera"
+                            />
+                            <MenuItem
+                                onPress={() => {
+                                    if (options.backCamera) {
+                                        toggleOption('backCamera');
+                                        cameraRef.current && cameraRef.current.switchCamera();
+                                    }
+                                }}
+                                iconSource={options.backCamera ? Images.CHECKBOX_OFF_ICON : Images.CHECKBOX_ICON}
+                                label="Front Camera"
+                            />
+                            {!isRecording && (
+                                <>
                                     <MenuItem
-                                        key={'r-' + resolution.preset}
-                                        onPress={() => {
-                                            setResolution(resolution);
-                                        }}
-                                        iconSource={
-                                            options.resolution.preset === resolution.preset
-                                                ? Images.CHECKBOX_ICON
-                                                : Images.CHECKBOX_OFF_ICON
-                                        }
-                                        label={resolution.label}
-                                    />
-                                ))}
-                            </>
-                        )}
-                    </View>
+                                        separator={true}
+                                        label="Resolution" />
+                                    {RESOLUTIONS.map((resolution) => (
+                                        <MenuItem
+                                            key={'r-' + resolution.preset}
+                                            onPress={() => {
+                                                setResolution(resolution);
+                                            }}
+                                            iconSource={
+                                                options.resolution.preset === resolution.preset
+                                                    ? Images.CHECKBOX_ICON
+                                                    : Images.CHECKBOX_OFF_ICON
+                                            }
+                                            label={resolution.label}
+                                        />
+                                    ))}
+                                </>
+                            )}
+                        </View>
+                    </ScrollView>
                 )}
                 <View
                     style={[
@@ -386,16 +400,11 @@ export default function HomeScreen({ navigation }) {
                     </TouchableOpacity>
                 </View>
                 <View style={[styles.bottomMenu]}>
-                    {isBottomMenuActive && (
+                    {isBottomMenuActive && liveSales && (
                         <FlatList
-                            data={[
-                                { id: 1, date: 'Jan 18, 2020', time: '11:30 am' },
-                                { id: 2, date: 'Feb 18, 2020', time: '11:30 am' },
-                                { id: 3, date: 'Mar 18, 2020', time: '11:30 am' },
-                                { id: 4, date: 'Apr 18, 2020', time: '11:30 am' },
-                            ]}
+                            data={liveSales}
                             renderItem={renderBottomMenuItem}
-                            keyExtractor={(item) => item.id.toString()}
+                            keyExtractor={(item) => JSON.stringify(item)}
                         />
                     )}
                 </View>

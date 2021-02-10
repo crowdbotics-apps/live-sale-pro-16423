@@ -8,9 +8,12 @@ export const GET_LIVE_SALES_EVENTS = gql`
     query LiveSalesEvents($shopId: ID!) {
         liveSalesEvents(shopId: $shopId) {
             nodes {
+                _id
                 title
-                startDate
                 streamTarget
+                startDate
+                claimWord
+                includedUrl
             }
         }
     }`
