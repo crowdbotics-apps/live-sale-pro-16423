@@ -3,12 +3,14 @@
  * @flow strict-local
  */
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Signin from '../pages/Signin'
 import Home from '../pages/Home';
 import routes from './routes';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View } from 'react-native';
 
 const Stack = createStackNavigator();
 const theme = {
@@ -24,9 +26,22 @@ const theme = {
 };
 
 const RootNavigator = () => {
+
+    const [isLoggedIn, setLoggedIn] = useState(null)
+
+    AsyncStorage.getItem('access_token')
+        .then((value) => {
+            setLoggedIn(value !== null)
+        })
+
+    if (isLoggedIn === null) {
+        // return splash maybe? 
+        return <View />
+    }
+
     return (
         <NavigationContainer theme={theme}>
-            <Stack.Navigator initialRouteName={routes.LOGIN}>
+            <Stack.Navigator initialRouteName={isLoggedIn ? routes.HOME : routes.LOGIN}>
                 <Stack.Screen
                     name={routes.HOME}
                     component={Home}

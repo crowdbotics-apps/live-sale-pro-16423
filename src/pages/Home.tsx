@@ -30,7 +30,8 @@ import { useLazyQuery, useMutation } from '@apollo/client'
 import {
     GET_SHOP_ID,
     GET_LIVE_SALES_EVENTS,
-    CREATE_INGEST_SERVER
+    CREATE_INGEST_SERVER,
+    GET_INGEST_SERVER_DETAILS
 } from '../api/queries';
 import Colors from '../utils/Colors';
 
@@ -69,7 +70,7 @@ const NavigationButton = ({ onPress, iconSource, active }) => (
     </TouchableOpacity>
 );
 
-const RecordingTime = ({ recordStartTime }) => {
+const RecordingTime = ({ recordStartTime }: { recordStartTime: any }) => {
     const [recordingTime, setRecordingTime] = useState();
 
     useEffect(() => {
@@ -93,18 +94,46 @@ const RecordingTime = ({ recordStartTime }) => {
     ) : null;
 };
 
+export type LiveSaleEvent = {
+    _id: number,
+    title: string
+    streamTarget: string,
+    startDate: string,
+    claimWord: string,
+    includedUrl: string
+}
+
 export default function HomeScreen({ navigation }) {
 
     type LivSalesRequest = { shopId: string }
-    type LiveSaleEvent = {
-        _id: number,
-        title: string
-        streamTarget: string,
-        startDate: string,
-        claimWord: string,
-        includedUrl: string
-    }
+
     type LivSalesResponse = { liveSalesEvents: { nodes: Array<LiveSaleEvent> } }
+
+    type CreateIngestServerRequest = {
+        input: {
+            shopId: string,
+            name: string
+        }
+    }
+    type CreateIngestServerResponse = {
+        createIngestServer: {
+            name: string,
+            status: string,
+            _id: string
+        }
+    }
+
+    type IngestServer = {
+        name: string,
+        shopId: string,
+        status: string,
+        dns: string,
+        ip: string,
+        inputUrl: string,
+        outputUrl: string
+    }
+    type IngestServerDetailsRequest = { shopId: string, serverId: string }
+    type IngestServerDetailsResponse = { getIngestServerDetails: IngestServer }
 
     const cameraRef = useRef();
     const [isRecording, setIsRecording] = useState(false);
@@ -114,11 +143,16 @@ export default function HomeScreen({ navigation }) {
     const [isBottomMenuActive, setIsBottomMenuActive] = useState(false);
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
     const [expandedStreamId, setExpandedStreamId] = useState(0);
+    const [activeStreamId, setActiveStreamId] = useState(0);
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
     const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
-    const [createIngestServer, createIngestServerResponse] = useMutation(CREATE_INGEST_SERVER);
+    const [createIngestServer, createIngestServerResponse] = useMutation<CreateIngestServerResponse, CreateIngestServerRequest>(CREATE_INGEST_SERVER);
+    const [getIngestServerDetails, ingestServerDetailsResponse] = useLazyQuery<IngestServerDetailsResponse, IngestServerDetailsRequest>(GET_INGEST_SERVER_DETAILS);
 
     const liveSales = liveSalesResponse.data?.liveSalesEvents?.nodes
+    const shopID = shopIdResponse.data?.primaryShopId
+    const ingestServer = createIngestServerResponse.data?.createIngestServer
+    const ingestServerDetails = ingestServerDetailsResponse.data?.getIngestServerDetails
 
     const [options, setOptions] = useState({
         sound: true,
@@ -222,32 +256,57 @@ export default function HomeScreen({ navigation }) {
     }, [])
 
     useEffect(() => {
-        if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
-            getLiveSales({ variables: { shopId: shopIdResponse.data.primaryShopId } })
+        if (shopID) {
+            getLiveSales({ variables: { shopId: shopID } })
         }
     }, [shopIdResponse])
 
+    useEffect(() => {
+        const interval = setInterval(fetchIngestServerDetails, 5000)
+        return () => clearInterval(interval)
+    }, [ingestServer])
+
+    const fetchIngestServerDetails = () => {
+        if (ingestServer?._id) {
+            const inputUrl = ingestServerDetails?.inputUrl
+            if (inputUrl && inputUrl !== '') { return }
+            const params: IngestServerDetailsRequest = {
+                shopId: shopID,
+                serverId: ingestServer?._id
+            }
+            console.log("IngestServerDetailsRequest: ", params)
+            getIngestServerDetails({ variables: params })
+        }
+    }
+
     const renderBottomMenuItem = ({ item }: { item: LiveSaleEvent }) => {
         const onStart = () => {
-            console.log("Starting Ingest server with ID: ", item._id)
-            // const params = {
-            //     input: { shopId: shopIdResponse.data.primaryShopId }
-            // }
-            // createIngestServer({ variables: params })
-            // console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
+            const params: CreateIngestServerRequest = {
+                input: {
+                    shopId: shopID,
+                    name: item.title.replace(/ /g, '.')
+                }
+            }
+            console.log("Starting Ingest Server: ", params)
+            createIngestServer({ variables: params })
         }
 
-        const date = moment(item.startDate).format('MMM DD yyyy')
-        const time = moment(item.startDate).format('hh:mm a')
+        const onStartStreaming = () => {
+            setIsBottomMenuActive(false)
+            toggleStream()
+        }
+
+        const inputUrl = ingestServerDetails?.inputUrl
+        const serverId = ingestServer?._id
 
         return <StreamListItem
-            onPress={() => {
-                expandedStreamId === item._id ? setExpandedStreamId(0) : setExpandedStreamId(item._id)
-            }}
-            date={date}
-            time={time}
+            event={item}
+            onPress={() => { expandedStreamId === item._id ? setExpandedStreamId(0) : setExpandedStreamId(item._id) }}
             isExpanded={expandedStreamId == item._id}
+            isWaiting={serverId !== null && serverId !== undefined && (!inputUrl || inputUrl === '')}
+            isReady={inputUrl !== null && inputUrl !== undefined && inputUrl !== ''}
             onStart={onStart}
+            onStartStreaming={onStartStreaming}
         />
     };
 
@@ -255,8 +314,10 @@ export default function HomeScreen({ navigation }) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
     } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
         console.log("SHOP ID: ", shopIdResponse.data)
-        console.log("LIVE SALES DATA: ", liveSales)
-        console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
+        // console.log("LIVE SALES DATA: ", liveSales)
+        // console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
+        console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
+        console.log("Create Ingest Server Response ERROR: " + createIngestServerResponse.error)
     }
 
     return (
@@ -270,7 +331,7 @@ export default function HomeScreen({ navigation }) {
                 <NodeCameraView
                     style={{ flex: 1 }}
                     ref={cameraRef}
-                    outputUrl={pushserver + stream}
+                    outputUrl={ingestServerDetails?.inputUrl}
                     /*
           
                               camera={{ cameraId: 1, cameraFrontMirror: true }}

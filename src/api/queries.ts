@@ -19,15 +19,23 @@ export const GET_LIVE_SALES_EVENTS = gql`
     }`
 
 export const CREATE_INGEST_SERVER = gql`
-    mutation CreateIngestServer($input: String!) {
-        createIngestServer(input: $shopId) {
-            _id
-            shopId
-            eventId
+    mutation CreateIngestServer($input: CreateIngestServerInput!) {
+        createIngestServer(input: $input) {
             name
-            tags
-            ip
-            dns
             status
+            _id
+        }
+    }`
+
+export const GET_INGEST_SERVER_DETAILS = gql`
+    query GetIngestServerDetails($shopId: ID!, $serverId: ID!) {
+        getIngestServerDetails(shopId: $shopId, serverId: $serverId){
+            name
+            shopId
+            status
+            dns
+            ip
+            inputUrl
+            outputUrl
         }
     }`
