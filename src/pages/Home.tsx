@@ -339,24 +339,9 @@ export default function HomeScreen({ navigation }) {
                     style={{ flex: 1 }}
                     ref={cameraRef}
                     outputUrl={ingestServerDetails?.inputUrl}
-                    /*
-          
-                              camera={{ cameraId: 1, cameraFrontMirror: true }}
-                    audio={{ bitrate: 32000, profile: 1, samplerate: 44100 }}
-                    video={{ preset: 1, bitrate: 500000, profile: 1, fps: 15, videoFrontMirror: false }}
-                    smoothSkinLevel={3}
-          
-                    */
                     camera={{ cameraId: 1, cameraFrontMirror: true }}
                     audio={{ bitrate: 32000, profile: 1, samplerate: 44100 }}
-                    video={{
-                        preset: options.resolution.preset,
-                        fps: 30,
-                        bitrate: 500000,
-                        profile: 1,
-                        videoFrontMirror: false,
-                    }}
-                    smoothSkinLevel={3}
+                    video={{ preset: options.resolution.preset, bitrate: 400000, profile: 1, fps: 15, videoFrontMirror: false }}
                     autopreview={true}
                     onStatus={(code: any, msg: string) => {
                         if (code === 2002) {
