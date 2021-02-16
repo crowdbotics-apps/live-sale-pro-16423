@@ -35,8 +35,8 @@ import {
 } from '../api/queries';
 import Colors from '../utils/Colors';
 
-const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
-const stream = 'ea0c69ca';
+// const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
+// const stream = 'ea0c69ca';
 
 /*
    public static final int VIDEO_PPRESET_16X9_540 = 3;
@@ -144,6 +144,8 @@ export default function HomeScreen({ navigation }) {
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
     const [expandedStreamId, setExpandedStreamId] = useState(0);
     const [activeStreamId, setActiveStreamId] = useState(0);
+    const [isStreamActive, setIsStreamActive] = useState(false);
+
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
     const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
     const [createIngestServer, createIngestServerResponse] = useMutation<CreateIngestServerResponse, CreateIngestServerRequest>(CREATE_INGEST_SERVER);
@@ -279,6 +281,13 @@ export default function HomeScreen({ navigation }) {
         }
     }
 
+    const inputUrl = ingestServerDetails?.inputUrl
+    const serverId = ingestServer?._id
+    const isReady = inputUrl !== null && inputUrl !== undefined && inputUrl !== ''
+    if (isReady && !isStreamActive) { 
+        setIsStreamActive(true)
+    }
+
     const renderBottomMenuItem = ({ item }: { item: LiveSaleEvent }) => {
         const onStart = () => {
             const params: CreateIngestServerRequest = {
@@ -296,28 +305,26 @@ export default function HomeScreen({ navigation }) {
             toggleStream()
         }
 
-        const inputUrl = ingestServerDetails?.inputUrl
-        const serverId = ingestServer?._id
-
         return <StreamListItem
             event={item}
             onPress={() => { expandedStreamId === item._id ? setExpandedStreamId(0) : setExpandedStreamId(item._id) }}
             isExpanded={expandedStreamId == item._id}
             isWaiting={serverId !== null && serverId !== undefined && (!inputUrl || inputUrl === '')}
-            isReady={inputUrl !== null && inputUrl !== undefined && inputUrl !== ''}
+            isReady={isReady}
             onStart={onStart}
             onStartStreaming={onStartStreaming}
         />
     };
 
+    console.log("SHOP ID: ", shopIdResponse.data)
+    // console.log("LIVE SALES DATA: ", liveSales)
+    // console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
+    console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
+    console.log("Create Ingest Server Response ERROR: " + createIngestServerResponse.error)
+    console.log("Ingest Server Details Response: ", ingestServerDetails)
+
     if (shopIdResponse.loading) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
-    } else if (shopIdResponse.data && shopIdResponse.data.primaryShopId) {
-        console.log("SHOP ID: ", shopIdResponse.data)
-        // console.log("LIVE SALES DATA: ", liveSales)
-        // console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
-        console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
-        console.log("Create Ingest Server Response ERROR: " + createIngestServerResponse.error)
     }
 
     return (
@@ -448,7 +455,7 @@ export default function HomeScreen({ navigation }) {
                         </View>
                     </ScrollView>
                 )}
-                <View
+                {isStreamActive && <View
                     style={[
                         styles.controller,
                         isRecording ? styles.controllerRecording : null,
@@ -459,7 +466,7 @@ export default function HomeScreen({ navigation }) {
                             {isRecording ? 'STOP' : 'START'}
                         </Text>
                     </TouchableOpacity>
-                </View>
+                </View>}
                 <View style={[styles.bottomMenu]}>
                     {isBottomMenuActive && liveSales && (
                         <FlatList
