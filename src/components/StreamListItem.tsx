@@ -1,29 +1,59 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Image, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, Image, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import Colors from '../utils/Colors';
+import moment from 'moment';
+import { LiveSaleEvent } from '../pages/Home'
 
-const StreamListItem = ({ onPress = {}, date = '', time = '', disabled = false, separator = false, isExpanded = false }) => {
+type StreamListProps = {
+    event: LiveSaleEvent
+    onPress: Function,
+    disabled: boolean,
+    separator: boolean,
+    isExpanded : boolean,
+    isWaiting: boolean,
+    isReady: boolean,
+    onStart: Function,
+    onStartStreaming: Function
+}
+
+const StreamListItem = ({
+    event,
+    onPress = () => { },
+    disabled = false,
+    separator = false,
+    isExpanded = false,
+    isWaiting = false,
+    isReady = false,
+    onStart = () => { },
+    onStartStreaming = () => { } }: StreamListProps) => {
+
+    const message = isWaiting ? 'Live Sale Pro is activating the live stream. This may take a few minutes.' :
+        isReady ? 'Stream is active' :
+            'Start your broadcast using this stream. Setup will require a few minutes to start.'
+    const date = moment(event?.startDate).format('MMM DD yyyy')
+    const time = moment(event?.startDate).format('hh:mm a')
     return (
         <TouchableOpacity
             onPress={disabled ? () => { } : onPress}
             style={[styles.menuRow, separator && styles.menuRowSeparator, isExpanded && styles.expandedMenuRow]}>
             <View style={styles.dateContainer}>
-                <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>
-                    {date}
-                </Text>
-                <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>
-                    {time}
-                </Text>
+                <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>{date}</Text>
+                <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>{time}</Text>
+                {isWaiting ? <ActivityIndicator style={styles.activityIndicator} color={'white'} /> : <View />}
             </View>
             {isExpanded && (
                 <View style={styles.expandedContainer}>
-                    <Text style={[styles.messageText, disabled ? { opacity: 0.6 } : null]}>
-                        {'Start your broadcast using this stream. Setup will require few minutes to start.'}
-                    </Text>
-                    <Text style={[styles.boldedMessageText, disabled ? { opacity: 0.6 } : null]}>
-                        {'Thank you for your patience.'}
-                    </Text>
-                    <TouchableOpacity style={styles.button} onPress={() => { }}><Text style={styles.buttonText}>Select</Text></TouchableOpacity>
+                    <Text style={[styles.messageText, disabled ? { opacity: 0.6 } : null]}>{message}</Text>
+                    { isWaiting || isReady &&
+                        <Text style={[styles.boldedMessageText, disabled ? { opacity: 0.6 } : null]}>
+                            {'Thank you for your patience.'}
+                        </Text>
+                    }
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: isReady ? Colors.Green : Colors.White }]}
+                        onPress={() => isReady ? onStartStreaming() : onStart()}>
+                        <Text style={styles.buttonText}>{isReady ? 'Start Stream' : 'Select'}</Text>
+                    </TouchableOpacity>
                 </View>
             )}
         </TouchableOpacity>
@@ -38,14 +68,14 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         borderBottomColor: '#CB396B',
         borderBottomWidth: 1,
-        // alignItems: 'center',
     },
     expandedMenuRow: {
         backgroundColor: Colors.DarkPink
     },
     dateContainer: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginHorizontal: 30
     },
     dateText: {
         fontFamily: 'Roboto',
@@ -53,7 +83,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         lineHeight: 40,
         color: 'white',
-        padding: 20
+        paddingVertical: 20
     },
     messageText: {
         fontFamily: 'Roboto',
@@ -61,6 +91,7 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         lineHeight: 28,
         color: 'white',
+        textAlign: 'center'
     },
     boldedMessageText: {
         fontFamily: 'Roboto',
@@ -68,6 +99,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         lineHeight: 28,
         color: 'white',
+        textAlign: 'center'
     },
     menuRowSeparator: {
         backgroundColor: '#464646',
@@ -81,10 +113,10 @@ const styles = StyleSheet.create({
     },
     expandedContainer: {
         padding: 45,
-        paddingTop: 0
+        paddingTop: 0,
+        alignContent: 'center'
     },
     button: {
-        backgroundColor: Colors.White,
         borderRadius: 20,
         height: 40,
         paddingVertical: 10,
@@ -97,4 +129,8 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold'
     },
+    activityIndicator: {
+        justifyContent: 'center',
+        alignSelf: 'center'
+    }
 })
