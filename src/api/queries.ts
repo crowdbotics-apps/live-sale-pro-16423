@@ -24,6 +24,7 @@ export const CREATE_INGEST_SERVER = gql`
             name
             status
             _id
+            eventId
         }
     }`
 

@@ -34,35 +34,24 @@ import {
     GET_INGEST_SERVER_DETAILS
 } from '../api/queries';
 import Colors from '../utils/Colors';
+import {
+    LiveSaleEvent,
+    LivSalesResponse,
+    LivSalesRequest,
+    CreateIngestServerResponse,
+    CreateIngestServerRequest,
+    IngestServerDetailsResponse,
+    IngestServerDetailsRequest
+} from '../api/types';
+import { RESOLUTIONS } from '../utils/utils';
 
 // const pushserver = 'rtmp://3580eb.entrypoint.cloud.wowza.com/app-T2c38TX8/';
 // const stream = 'ea0c69ca';
 
-/*
-   public static final int VIDEO_PPRESET_16X9_540 = 3;
-    public static final int VIDEO_PPRESET_16X9_720 = 4;
-    public static final int VIDEO_PPRESET_16X9_1080 = 5;
-*/
-const RESOLUTIONS = [
-    {
-        label: '540',
-        preset: 3,
-    },
-    {
-        label: '720',
-        preset: 4,
-    },
-    {
-        label: '1080',
-        preset: 5,
-    },
-];
+const formatSeconds = (seconds: any) =>
+    moment.utc(moment.duration(seconds, 'seconds').as('milliseconds')).format(seconds >= 3600 ? 'HH:mm:ss' : 'mm:ss');
 
-const formatSeconds = (seconds) =>
-    moment.utc(moment.duration(seconds, 'seconds').as('milliseconds'))
-        .format(seconds >= 3600 ? 'HH:mm:ss' : 'mm:ss');
-
-const NavigationButton = ({ onPress, iconSource, active }) => (
+const NavigationButton = ({ onPress, iconSource, active }: { onPress: any, iconSource: any, active: any }) => (
     <TouchableOpacity
         onPress={onPress}
         style={[styles.navButton, active ? styles.navButtonActive : undefined]}>
@@ -94,46 +83,7 @@ const RecordingTime = ({ recordStartTime }: { recordStartTime: any }) => {
     ) : null;
 };
 
-export type LiveSaleEvent = {
-    _id: number,
-    title: string
-    streamTarget: string,
-    startDate: string,
-    claimWord: string,
-    includedUrl: string
-}
-
-export default function HomeScreen({ navigation }) {
-
-    type LivSalesRequest = { shopId: string }
-
-    type LivSalesResponse = { liveSalesEvents: { nodes: Array<LiveSaleEvent> } }
-
-    type CreateIngestServerRequest = {
-        input: {
-            shopId: string,
-            name: string
-        }
-    }
-    type CreateIngestServerResponse = {
-        createIngestServer: {
-            name: string,
-            status: string,
-            _id: string
-        }
-    }
-
-    type IngestServer = {
-        name: string,
-        shopId: string,
-        status: string,
-        dns: string,
-        ip: string,
-        inputUrl: string,
-        outputUrl: string
-    }
-    type IngestServerDetailsRequest = { shopId: string, serverId: string }
-    type IngestServerDetailsResponse = { getIngestServerDetails: IngestServer }
+export default function HomeScreen({ navigation }: { navigation: any }) {
 
     const cameraRef = useRef();
     const [isRecording, setIsRecording] = useState(false);
@@ -142,9 +92,9 @@ export default function HomeScreen({ navigation }) {
     const [isLeftMenuActive, setIsLeftMenuActive] = useState(false);
     const [isBottomMenuActive, setIsBottomMenuActive] = useState(false);
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
-    const [expandedStreamId, setExpandedStreamId] = useState(0);
+    const [expandedStreamId, setExpandedStreamId] = useState("");
     const [activeStreamId, setActiveStreamId] = useState(0);
-    const [isStreamActive, setIsStreamActive] = useState(false);
+    const [isStreamActive, setIsStreamActive] = useState(true);
 
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
     const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
@@ -156,6 +106,12 @@ export default function HomeScreen({ navigation }) {
     const ingestServer = createIngestServerResponse.data?.createIngestServer
     const ingestServerDetails = ingestServerDetailsResponse.data?.getIngestServerDetails
 
+    const isReady = ingestServerDetails?.inputUrl && ingestServerDetails?.inputUrl !== ''
+    const isWaiting = ingestServer?._id && !isReady
+    if (isReady && !isStreamActive) {
+        setIsStreamActive(true)
+    }
+
     const [options, setOptions] = useState({
         sound: true,
         flash: false,
@@ -163,8 +119,7 @@ export default function HomeScreen({ navigation }) {
         resolution: RESOLUTIONS[RESOLUTIONS.length - 1],
     });
 
-    const toggleOption = (option: any) => {
-        console.log('toggleOption');
+    const toggleOption = (option: string) => {
         if (option === 'backCamera' && options.backCamera) {
             // switch off flash state when switching to front camera
             setOptions({
@@ -180,7 +135,7 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
-    const setResolution = (resolution) => {
+    const setResolution = (resolution: any) => {
         setOptions({
             ...options,
             resolution,
@@ -188,7 +143,6 @@ export default function HomeScreen({ navigation }) {
     };
 
     const toggleStream = () => {
-        console.log('toggleStream', isRecording);
         setIsLeftMenuActive(false);
         setIsRightMenuActive(false);
         setIsBottomMenuActive(false);
@@ -263,29 +217,27 @@ export default function HomeScreen({ navigation }) {
         }
     }, [shopIdResponse])
 
+    let serverDetailsInterval: any
     useEffect(() => {
-        const interval = setInterval(fetchIngestServerDetails, 5000)
-        return () => clearInterval(interval)
+        if (ingestServer?._id) {
+            clearInterval(serverDetailsInterval)
+            serverDetailsInterval = setInterval(fetchIngestServerDetails, 5000)
+            return () => clearInterval(serverDetailsInterval)
+        }
     }, [ingestServer])
 
     const fetchIngestServerDetails = () => {
-        if (ingestServer?._id) {
-            const inputUrl = ingestServerDetails?.inputUrl
-            if (inputUrl && inputUrl !== '') { return }
-            const params: IngestServerDetailsRequest = {
-                shopId: shopID,
-                serverId: ingestServer?._id
-            }
-            console.log("IngestServerDetailsRequest: ", params)
-            getIngestServerDetails({ variables: params })
+        const inputUrl = ingestServerDetails?.inputUrl
+        if (inputUrl && inputUrl !== '') {
+            clearInterval(serverDetailsInterval)
+            return
         }
-    }
-
-    const inputUrl = ingestServerDetails?.inputUrl
-    const serverId = ingestServer?._id
-    const isReady = inputUrl !== null && inputUrl !== undefined && inputUrl !== ''
-    if (isReady && !isStreamActive) { 
-        setIsStreamActive(true)
+        const params: IngestServerDetailsRequest = {
+            shopId: shopID,
+            serverId: ingestServer?._id
+        }
+        console.log("IngestServerDetailsRequest: ", params)
+        getIngestServerDetails({ variables: params })
     }
 
     const renderBottomMenuItem = ({ item }: { item: LiveSaleEvent }) => {
@@ -293,7 +245,8 @@ export default function HomeScreen({ navigation }) {
             const params: CreateIngestServerRequest = {
                 input: {
                     shopId: shopID,
-                    name: item.title.replace(/ /g, '.')
+                    name: item.title.replace(/ /g, '.'),
+                    eventId: item._id
                 }
             }
             console.log("Starting Ingest Server: ", params)
@@ -307,21 +260,25 @@ export default function HomeScreen({ navigation }) {
 
         return <StreamListItem
             event={item}
-            onPress={() => { expandedStreamId === item._id ? setExpandedStreamId(0) : setExpandedStreamId(item._id) }}
-            isExpanded={expandedStreamId == item._id}
-            isWaiting={serverId !== null && serverId !== undefined && (!inputUrl || inputUrl === '')}
-            isReady={isReady}
+            onPress={() => { expandedStreamId === item._id ? setExpandedStreamId("") : setExpandedStreamId(item._id) }}
+            isExpanded={expandedStreamId === item._id}
+            isWaiting={isWaiting === true && ingestServer?.eventId === item._id}
+            isReady={isReady === true && ingestServer?.eventId === item._id}
             onStart={onStart}
             onStartStreaming={onStartStreaming}
         />
     };
 
     console.log("SHOP ID: ", shopIdResponse.data)
-    // console.log("LIVE SALES DATA: ", liveSales)
+    console.log("LIVE SALES DATA: ", liveSales)
     // console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
     console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
-    console.log("Create Ingest Server Response ERROR: " + createIngestServerResponse.error)
+    console.log("Create Ingest Server Response ERROR: ", createIngestServerResponse.error)
     console.log("Ingest Server Details Response: ", ingestServerDetails)
+
+    if (shopIdResponse.error) {
+        handleLogout()
+    }
 
     if (shopIdResponse.loading) {
         return <ActivityIndicator size="large" color={Colors.Pink} />
@@ -338,7 +295,7 @@ export default function HomeScreen({ navigation }) {
                 <NodeCameraView
                     style={{ flex: 1 }}
                     ref={cameraRef}
-                    outputUrl={ingestServerDetails?.inputUrl}
+                    outputUrl="rtmp://165.227.126.57:1935/live/in"//{ingestServerDetails?.inputUrl}
                     camera={{ cameraId: 1, cameraFrontMirror: true }}
                     audio={{ bitrate: 32000, profile: 1, samplerate: 44100 }}
                     video={{ preset: options.resolution.preset, bitrate: 400000, profile: 1, fps: 15, videoFrontMirror: false }}
