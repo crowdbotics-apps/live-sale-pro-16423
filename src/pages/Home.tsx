@@ -1,10 +1,8 @@
 import React, {
     useEffect,
-    useMemo,
     useState,
     useRef,
     useLayoutEffect,
-    useCallback,
 } from 'react';
 import {
     StyleSheet,
@@ -31,7 +29,8 @@ import {
     GET_SHOP_ID,
     GET_LIVE_SALES_EVENTS,
     CREATE_INGEST_SERVER,
-    GET_INGEST_SERVER_DETAILS
+    GET_INGEST_SERVER_DETAILS,
+    DELETE_INGEST_SERVER
 } from '../api/queries';
 import Colors from '../utils/Colors';
 import {
@@ -41,7 +40,9 @@ import {
     CreateIngestServerResponse,
     CreateIngestServerRequest,
     IngestServerDetailsResponse,
-    IngestServerDetailsRequest
+    IngestServerDetailsRequest,
+    DeleteIngestServerRequest,
+    DeleteIngestServerResponse
 } from '../api/types';
 import { RESOLUTIONS } from '../utils/utils';
 
@@ -93,16 +94,16 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
     const [isBottomMenuActive, setIsBottomMenuActive] = useState(false);
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
     const [expandedStreamId, setExpandedStreamId] = useState("");
-    const [activeStreamId, setActiveStreamId] = useState(0);
     const [isStreamActive, setIsStreamActive] = useState(true);
 
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
     const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
     const [createIngestServer, createIngestServerResponse] = useMutation<CreateIngestServerResponse, CreateIngestServerRequest>(CREATE_INGEST_SERVER);
     const [getIngestServerDetails, ingestServerDetailsResponse] = useLazyQuery<IngestServerDetailsResponse, IngestServerDetailsRequest>(GET_INGEST_SERVER_DETAILS);
+    const [deleteIngestServer, deleteIngestServerResponse] = useMutation<DeleteIngestServerResponse, DeleteIngestServerRequest>(DELETE_INGEST_SERVER);
 
     const liveSales = liveSalesResponse.data?.liveSalesEvents?.nodes
-    const shopID = shopIdResponse.data?.primaryShopId
+    const shopID: string = shopIdResponse.data?.primaryShopId
     const ingestServer = createIngestServerResponse.data?.createIngestServer
     const ingestServerDetails = ingestServerDetailsResponse.data?.getIngestServerDetails
 
@@ -160,7 +161,17 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         setIsRecording(false);
         setRecordStartTime(0);
         setIsStopModalVisible(false);
+        setIsStreamActive(false);
         cameraRef.current && cameraRef.current.stop();
+
+        const params: DeleteIngestServerRequest = {
+            input: {
+                shopId: shopID,
+                serverId: ingestServer?._id
+            }
+        }
+        console.log("Delete Ingest Server: ", params)
+        deleteIngestServer({ variables: params })
     };
 
     const handleLogout = () => {
@@ -295,7 +306,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                 <NodeCameraView
                     style={{ flex: 1 }}
                     ref={cameraRef}
-                    outputUrl="rtmp://165.227.126.57:1935/live/in"//{ingestServerDetails?.inputUrl}
+                    outputUrl={ingestServerDetails?.inputUrl}
                     camera={{ cameraId: 1, cameraFrontMirror: true }}
                     audio={{ bitrate: 32000, profile: 1, samplerate: 44100 }}
                     video={{ preset: options.resolution.preset, bitrate: 400000, profile: 1, fps: 15, videoFrontMirror: false }}
@@ -454,14 +465,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
     },
-    controllerButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: '#D73676',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     controllerButtonText: {
         color: 'white',
         fontWeight: '900',
@@ -490,5 +493,13 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         left: 0,
+    },
+    controllerButton: {
+        width: 60,
+        height: 60, 
+        borderRadius: 30,
+        backgroundColor: '#D73676',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

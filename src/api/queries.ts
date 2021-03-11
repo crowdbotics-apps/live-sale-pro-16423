@@ -19,24 +19,40 @@ export const GET_LIVE_SALES_EVENTS = gql`
     }`
 
 export const CREATE_INGEST_SERVER = gql`
-    mutation CreateIngestServer($input: CreateIngestServerInput!) {
-        createIngestServer(input: $input) {
+mutation CreateIngestServer($input: CreateIngestServerInput!) {
+    createIngestServer(input: $input) {
+        name
+        status
+        _id
+        eventId
+    }
+}`
+
+export const GET_INGEST_SERVER_DETAILS = gql`
+query GetIngestServerDetails($shopId: ID!, $serverId: ID!) {
+    getIngestServerDetails(shopId: $shopId, serverId: $serverId){
+        name
+        shopId
+        status
+        dns
+        ip
+        inputUrl
+        outputUrl
+    }
+}`
+
+export const DELETE_INGEST_SERVER = gql`
+    mutation StopIngestServer($input: DeleteIngestServerInput!) {
+        deleteIngestServer(input: $input){
             name
             status
-            _id
-            eventId
         }
     }`
 
-export const GET_INGEST_SERVER_DETAILS = gql`
-    query GetIngestServerDetails($shopId: ID!, $serverId: ID!) {
-        getIngestServerDetails(shopId: $shopId, serverId: $serverId){
+export const LIST_INGEST_SERVER = gql`
+    mutation StopIngestServer($input: DeleteIngestServerInput!) {
+        deleteIngestServer(input: $input){
             name
-            shopId
             status
-            dns
-            ip
-            inputUrl
-            outputUrl
         }
     }`

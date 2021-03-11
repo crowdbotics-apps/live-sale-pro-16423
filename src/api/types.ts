@@ -9,10 +9,10 @@ export type LiveSaleEvent = {
 
 export type LivSalesRequest = { shopId: string }
 
-export type LivSalesResponse = { 
-    liveSalesEvents: { 
-        nodes: Array<LiveSaleEvent> 
-    } 
+export type LivSalesResponse = {
+    liveSalesEvents: {
+        nodes: Array<LiveSaleEvent>
+    }
 }
 
 export type CreateIngestServerRequest = {
@@ -42,5 +42,13 @@ export type IngestServer = {
     outputUrl: string
 }
 
-export type IngestServerDetailsRequest = { shopId: string, serverId: string }
+export type IngestServerDetailsRequest = { shopId: string, serverId: string | undefined }
 export type IngestServerDetailsResponse = { getIngestServerDetails: IngestServer }
+
+export type DeleteIngestServerRequest = {
+    input: {
+        shopId: string,
+        serverId: string | undefined
+    }
+}
+export type DeleteIngestServerResponse = { deleteIngestServer: IngestServer }
