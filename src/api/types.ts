@@ -5,6 +5,9 @@ export type LiveSaleEvent = {
     startDate: string,
     claimWord: string,
     includedUrl: string
+    inputUrl: string
+    outputUrl: string
+    status: string
 }
 
 export type LivSalesRequest = { shopId: string }
@@ -40,9 +43,10 @@ export type IngestServer = {
     ip: string,
     inputUrl: string,
     outputUrl: string
+    eventId: string
 }
 
-export type IngestServerDetailsRequest = { shopId: string, serverId: string | undefined }
+export type IngestServerDetailsRequest = { shopId: string, eventId: string | undefined }
 export type IngestServerDetailsResponse = { getIngestServerDetails: IngestServer }
 
 export type DeleteIngestServerRequest = {

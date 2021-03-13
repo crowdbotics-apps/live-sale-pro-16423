@@ -94,12 +94,14 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
     const [isBottomMenuActive, setIsBottomMenuActive] = useState(false);
     const [isStopModalVisible, setIsStopModalVisible] = useState(false);
     const [expandedStreamId, setExpandedStreamId] = useState("");
-    const [isStreamActive, setIsStreamActive] = useState(true);
+    const [waitingEventId, setWaitingEventId] = useState<string | null>(null);
+    const [readyEventId, setReadyEventId] = useState<string | null>(null);
+    const [readyInputUrl, setReadyInputUrl] = useState<string | null>(null);
 
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
     const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
     const [createIngestServer, createIngestServerResponse] = useMutation<CreateIngestServerResponse, CreateIngestServerRequest>(CREATE_INGEST_SERVER);
-    const [getIngestServerDetails, ingestServerDetailsResponse] = useLazyQuery<IngestServerDetailsResponse, IngestServerDetailsRequest>(GET_INGEST_SERVER_DETAILS);
+    const [getIngestServerDetails, ingestServerDetailsResponse] = useLazyQuery<IngestServerDetailsResponse, IngestServerDetailsRequest>(GET_INGEST_SERVER_DETAILS, { fetchPolicy: "network-only" });
     const [deleteIngestServer, deleteIngestServerResponse] = useMutation<DeleteIngestServerResponse, DeleteIngestServerRequest>(DELETE_INGEST_SERVER);
 
     const liveSales = liveSalesResponse.data?.liveSalesEvents?.nodes
@@ -107,11 +109,11 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
     const ingestServer = createIngestServerResponse.data?.createIngestServer
     const ingestServerDetails = ingestServerDetailsResponse.data?.getIngestServerDetails
 
-    const isReady = ingestServerDetails?.inputUrl && ingestServerDetails?.inputUrl !== ''
-    const isWaiting = ingestServer?._id && !isReady
-    if (isReady && !isStreamActive) {
-        setIsStreamActive(true)
-    }
+    // const isReady = ingestServerDetails?.inputUrl && ingestServerDetails?.inputUrl !== ''
+    // const isWaiting = ingestServer?._id && !isReady
+    // if (isReady && !isStreamActive) {
+    //     setIsStreamActive(true)
+    // }
 
     const [options, setOptions] = useState({
         sound: true,
@@ -161,7 +163,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         setIsRecording(false);
         setRecordStartTime(0);
         setIsStopModalVisible(false);
-        setIsStreamActive(false);
+        // setIsStreamActive(false);
         cameraRef.current && cameraRef.current.stop();
 
         const params: DeleteIngestServerRequest = {
@@ -226,42 +228,66 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         if (shopID) {
             getLiveSales({ variables: { shopId: shopID } })
         }
+        console.log("SHOP ID: ", shopIdResponse.data + '\n\n')
     }, [shopIdResponse])
+
+    
+    useEffect(() => {
+        if (ingestServer?._id) {
+            fetchIngestServerDetails(ingestServer.eventId)
+        }
+    }, [ingestServer])
 
     let serverDetailsInterval: any
     useEffect(() => {
-        if (ingestServer?._id) {
+        if (ingestServerDetails?.inputUrl && ingestServerDetails?.inputUrl !== '') {
+            clearInterval(serverDetailsInterval)
+            if (waitingEventId === ingestServerDetails.eventId) {
+                setWaitingEventId(null)
+            }
+            setReadyEventId(ingestServerDetails.eventId)
+            setReadyInputUrl(ingestServerDetails.inputUrl)
+        } else if (ingestServerDetails) {
             clearInterval(serverDetailsInterval)
             serverDetailsInterval = setInterval(fetchIngestServerDetails, 5000)
             return () => clearInterval(serverDetailsInterval)
         }
-    }, [ingestServer])
+    }, [ingestServerDetails])
 
-    const fetchIngestServerDetails = () => {
-        const inputUrl = ingestServerDetails?.inputUrl
-        if (inputUrl && inputUrl !== '') {
-            clearInterval(serverDetailsInterval)
-            return
+    const startIngestServer = (item: LiveSaleEvent) => {
+        const params: CreateIngestServerRequest = {
+            input: {
+                shopId: shopID,
+                name: item.title.replace(/ /g, '.'),
+                eventId: item._id
+            }
         }
+        console.log("Starting Ingest Server: ", params)
+        createIngestServer({ variables: params })
+    }
+
+    const fetchIngestServerDetails = (itemId?: string) => {
+        console.log('Calling ingest server details: ', itemId)
+        // if (ingestServerDetails?.inputUrl && ingestServerDetails?.inputUrl !== '') {
+        //     // clearInterval(serverDetailsInterval)
+        //     return
+        // }
         const params: IngestServerDetailsRequest = {
             shopId: shopID,
-            serverId: ingestServer?._id
+            eventId: itemId ? itemId : ingestServerDetails?.eventId
         }
-        console.log("IngestServerDetailsRequest: ", params)
+        console.log("Ingest Server Details Request: ", params)
         getIngestServerDetails({ variables: params })
     }
 
     const renderBottomMenuItem = ({ item }: { item: LiveSaleEvent }) => {
         const onStart = () => {
-            const params: CreateIngestServerRequest = {
-                input: {
-                    shopId: shopID,
-                    name: item.title.replace(/ /g, '.'),
-                    eventId: item._id
-                }
+            setWaitingEventId(item._id)
+            if (item.status === 'active') {
+                fetchIngestServerDetails(item._id)
+            } else {
+                startIngestServer(item)
             }
-            console.log("Starting Ingest Server: ", params)
-            createIngestServer({ variables: params })
         }
 
         const onStartStreaming = () => {
@@ -273,19 +299,27 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
             event={item}
             onPress={() => { expandedStreamId === item._id ? setExpandedStreamId("") : setExpandedStreamId(item._id) }}
             isExpanded={expandedStreamId === item._id}
-            isWaiting={isWaiting === true && ingestServer?.eventId === item._id}
-            isReady={isReady === true && ingestServer?.eventId === item._id}
+            isWaiting={waitingEventId === item._id}
+            isReady={(readyEventId === item._id)}
             onStart={onStart}
             onStartStreaming={onStartStreaming}
         />
     };
 
-    console.log("SHOP ID: ", shopIdResponse.data)
-    console.log("LIVE SALES DATA: ", liveSales)
-    // console.log("LIVE SALES ERROR: ", liveSalesResponse.error)
-    console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
-    console.log("Create Ingest Server Response ERROR: ", createIngestServerResponse.error)
-    console.log("Ingest Server Details Response: ", ingestServerDetails)
+    // useEffect(() => {
+    //     console.log("LIVE SALES DATA: ", liveSales + '\n\n')
+    //     console.log("LIVE SALES ERROR: ", liveSalesResponse.error + '\n\n')
+    // }, [liveSalesResponse])
+
+    // useEffect(() => {
+    //     console.log("Create Ingest Server Response: ", createIngestServerResponse.data)
+    //     console.log("Create Ingest Server ERROR: ", createIngestServerResponse.error + '\n\n')
+    // }, [createIngestServerResponse])
+
+    // useEffect(() => {
+    //     console.log("Ingest Server Details Response: ", ingestServerDetails)
+    //     console.log("Ingest Server Details ERROR: ", ingestServerDetailsResponse.error + '\n\n')
+    // }, [ingestServerDetailsResponse])
 
     if (shopIdResponse.error) {
         handleLogout()
@@ -306,7 +340,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                 <NodeCameraView
                     style={{ flex: 1 }}
                     ref={cameraRef}
-                    outputUrl={ingestServerDetails?.inputUrl}
+                    outputUrl={readyInputUrl}
                     camera={{ cameraId: 1, cameraFrontMirror: true }}
                     audio={{ bitrate: 32000, profile: 1, samplerate: 44100 }}
                     video={{ preset: options.resolution.preset, bitrate: 400000, profile: 1, fps: 15, videoFrontMirror: false }}
@@ -408,7 +442,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                         </View>
                     </ScrollView>
                 )}
-                {isStreamActive && <View
+                {readyEventId && <View
                     style={[
                         styles.controller,
                         isRecording ? styles.controllerRecording : null,
@@ -496,7 +530,7 @@ const styles = StyleSheet.create({
     },
     controllerButton: {
         width: 60,
-        height: 60, 
+        height: 60,
         borderRadius: 30,
         backgroundColor: '#D73676',
         justifyContent: 'center',

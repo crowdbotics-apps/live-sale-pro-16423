@@ -4,7 +4,7 @@ import { authenticateUser } from "../api/auth"
 import routes from '../navigation/routes';
 import Colors from '../utils/Colors';
 
-export default function Signin({ navigation }) {
+export default function Signin({ navigation }: {navigation: any}) {
 
     const [loading, setLoading] = useState(false);
 

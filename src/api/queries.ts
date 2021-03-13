@@ -14,6 +14,9 @@ export const GET_LIVE_SALES_EVENTS = gql`
                 startDate
                 claimWord
                 includedUrl
+                inputUrl
+                outputUrl
+                status
             }
         }
     }`
@@ -29,8 +32,8 @@ mutation CreateIngestServer($input: CreateIngestServerInput!) {
 }`
 
 export const GET_INGEST_SERVER_DETAILS = gql`
-query GetIngestServerDetails($shopId: ID!, $serverId: ID!) {
-    getIngestServerDetails(shopId: $shopId, serverId: $serverId){
+query GetIngestServerDetails($shopId: ID!, $eventId: ID!) {
+    getIngestServerDetails(shopId: $shopId, eventId: $eventId){
         name
         shopId
         status
@@ -38,6 +41,7 @@ query GetIngestServerDetails($shopId: ID!, $serverId: ID!) {
         ip
         inputUrl
         outputUrl
+        eventId
     }
 }`
 
