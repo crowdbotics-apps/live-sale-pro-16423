@@ -8,4 +8,6 @@ export default {
     CHECKBOX_OFF_ICON: require('../../assets/images/checkbox_off.png'),
     CHECKBOX_ICON: require('../../assets/images/checkbox.png'),
     LOGOUT_ICON: require('../../assets/images/logout.png'),
+    CHECKMARK_ICON: require('../../assets/images/check_mark.png'),
+    REFRESH_ICON: require('../../assets/images/refresh_icon.png'),
 }

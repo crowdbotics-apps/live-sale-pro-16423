@@ -3,6 +3,7 @@ import { StyleSheet, View, Image, TouchableOpacity, Text, ActivityIndicator } fr
 import Colors from '../utils/Colors';
 import moment from 'moment';
 import { LiveSaleEvent } from '../pages/Home'
+import Images from '../utils/Images';
 
 type StreamListProps = {
     event: LiveSaleEvent
@@ -12,6 +13,7 @@ type StreamListProps = {
     isExpanded : boolean,
     isWaiting: boolean,
     isReady: boolean,
+    isFinished: boolean,
     onStart: Function,
     onStartStreaming: Function
 }
@@ -24,6 +26,7 @@ const StreamListItem = ({
     isExpanded = false,
     isWaiting = false,
     isReady = false,
+    isFinished = false,
     onStart = () => { },
     onStartStreaming = () => { } }: StreamListProps) => {
 
@@ -32,14 +35,16 @@ const StreamListItem = ({
             'Start your broadcast using this stream. Setup will require a few minutes to start.'
     const date = moment(event?.startDate).format('MMM DD yyyy')
     const time = moment(event?.startDate).format('hh:mm a')
+    const Wrapper = separator || disabled ? View : TouchableOpacity
     return (
-        <TouchableOpacity
-            onPress={disabled ? () => { } : onPress}
+        <Wrapper
+            onPress={disabled || isFinished ? () => { } : onPress}
             style={[styles.menuRow, separator && styles.menuRowSeparator, isExpanded && styles.expandedMenuRow]}>
             <View style={styles.dateContainer}>
                 <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>{date}</Text>
                 <Text style={[styles.dateText, disabled ? { opacity: 0.6 } : null]}>{time}</Text>
                 {isWaiting ? <ActivityIndicator style={styles.activityIndicator} color={'white'} /> : <View />}
+                {isFinished && <Image source={Images.CHECKMARK_ICON} style={styles.checkIcon} />}
             </View>
             {isExpanded && (
                 <View style={styles.expandedContainer}>
@@ -56,7 +61,7 @@ const StreamListItem = ({
                     </TouchableOpacity>
                 </View>
             )}
-        </TouchableOpacity>
+        </Wrapper>
     );
 };
 
@@ -131,6 +136,13 @@ const styles = StyleSheet.create({
     },
     activityIndicator: {
         justifyContent: 'center',
+        alignSelf: 'center'
+    },
+    checkIcon: {
+        width: 20,
+        height: 20,
+        tintColor: '#fff',
+        opacity: 0.6,
         alignSelf: 'center'
     }
 })

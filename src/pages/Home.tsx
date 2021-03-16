@@ -52,9 +52,10 @@ import { RESOLUTIONS } from '../utils/utils';
 const formatSeconds = (seconds: any) =>
     moment.utc(moment.duration(seconds, 'seconds').as('milliseconds')).format(seconds >= 3600 ? 'HH:mm:ss' : 'mm:ss');
 
-const NavigationButton = ({ onPress, iconSource, active }: { onPress: any, iconSource: any, active: any }) => (
+const NavigationButton = ({ onPress, iconSource, active, disabled }: { onPress: any, iconSource: any, active: any, disabled: any }) => (
     <TouchableOpacity
         onPress={onPress}
+        disabled={disabled}
         style={[styles.navButton, active ? styles.navButtonActive : undefined]}>
         <Image source={iconSource} style={styles.navButtonImg} />
     </TouchableOpacity>
@@ -99,7 +100,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
     const [readyInputUrl, setReadyInputUrl] = useState<string | null>(null);
 
     const [getShopId, shopIdResponse] = useLazyQuery(GET_SHOP_ID);
-    const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS);
+    const [getLiveSales, liveSalesResponse] = useLazyQuery<LivSalesResponse, LivSalesRequest>(GET_LIVE_SALES_EVENTS, { fetchPolicy: "network-only" });
     const [createIngestServer, createIngestServerResponse] = useMutation<CreateIngestServerResponse, CreateIngestServerRequest>(CREATE_INGEST_SERVER);
     const [getIngestServerDetails, ingestServerDetailsResponse] = useLazyQuery<IngestServerDetailsResponse, IngestServerDetailsRequest>(GET_INGEST_SERVER_DETAILS, { fetchPolicy: "network-only" });
     const [deleteIngestServer, deleteIngestServerResponse] = useMutation<DeleteIngestServerResponse, DeleteIngestServerRequest>(DELETE_INGEST_SERVER);
@@ -166,6 +167,12 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         // setIsStreamActive(false);
         cameraRef.current && cameraRef.current.stop();
 
+        // Refresh the live streams list
+        fetchLiveSalesEvents()
+    };
+
+    const stopAndDeleteLiveStreamIngestServer = () => {
+        stopStream()
         const params: DeleteIngestServerRequest = {
             input: {
                 shopId: shopID,
@@ -174,7 +181,9 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         }
         console.log("Delete Ingest Server: ", params)
         deleteIngestServer({ variables: params })
-    };
+        setReadyEventId(null)
+        setReadyInputUrl(null)
+    }
 
     const handleLogout = () => {
         const completion = () => {
@@ -193,6 +202,12 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
         setIsBottomMenuActive(!isBottomMenuActive)
     }
 
+    const fetchLiveSalesEvents = () => {
+        if (shopID) {
+            getLiveSales({ variables: { shopId: shopID } })
+        }
+    }
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerLeft: () => (
@@ -202,6 +217,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                         setIsRightMenuActive(false);
                         setIsBottomMenuActive(false);
                     }}
+                    disabled={isRecording}
                     iconSource={Images.MENU_ICON}
                     active={isLeftMenuActive}
                 />
@@ -213,6 +229,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                         setIsLeftMenuActive(false);
                         setIsBottomMenuActive(false);
                     }}
+                    disabled={false}
                     iconSource={Images.SETTINGS_ICON}
                     active={isRightMenuActive}
                 />
@@ -225,13 +242,11 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
     }, [])
 
     useEffect(() => {
-        if (shopID) {
-            getLiveSales({ variables: { shopId: shopID } })
-        }
+        fetchLiveSalesEvents()
         console.log("SHOP ID: ", shopIdResponse.data + '\n\n')
     }, [shopIdResponse])
 
-    
+
     useEffect(() => {
         if (ingestServer?._id) {
             fetchIngestServerDetails(ingestServer.eventId)
@@ -301,10 +316,28 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
             isExpanded={expandedStreamId === item._id}
             isWaiting={waitingEventId === item._id}
             isReady={(readyEventId === item._id)}
+            isFinished={item.status === 'finished'}
+            disabled={item.status === 'finished'}
             onStart={onStart}
             onStartStreaming={onStartStreaming}
         />
     };
+
+    const renderBottomListHeader = () => {
+        return (
+            <View style={styles.bottomMenuHeader}>
+                <Text style={styles.titleText}>
+                    My Events
+                </Text>
+                <TouchableOpacity
+                    onPress={() => { fetchLiveSalesEvents() }}>
+                    <View style={styles.menuImgWrapper}>
+                        <Image source={Images.REFRESH_ICON} style={styles.menuImg} />
+                    </View>
+                </TouchableOpacity>
+            </View>
+        )
+    }
 
     // useEffect(() => {
     //     console.log("LIVE SALES DATA: ", liveSales + '\n\n')
@@ -320,6 +353,8 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
     //     console.log("Ingest Server Details Response: ", ingestServerDetails)
     //     console.log("Ingest Server Details ERROR: ", ingestServerDetailsResponse.error + '\n\n')
     // }, [ingestServerDetailsResponse])
+
+    console.log("AAA: ", readyInputUrl)
 
     if (shopIdResponse.error) {
         handleLogout()
@@ -340,7 +375,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                 <NodeCameraView
                     style={{ flex: 1 }}
                     ref={cameraRef}
-                    outputUrl={readyInputUrl}
+                    outputUrl={readyInputUrl ?? ''}
                     camera={{ cameraId: 1, cameraFrontMirror: true }}
                     audio={{ bitrate: 32000, profile: 1, samplerate: 44100 }}
                     video={{ preset: options.resolution.preset, bitrate: 400000, profile: 1, fps: 15, videoFrontMirror: false }}
@@ -350,7 +385,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                             stopStream();
                             Alert.alert(
                                 'Error connecting to stream',
-                                'Please make sure you have a stream set up',
+                                'Please make sure you have a stream set up and try again.',
                             );
                         }
 
@@ -363,7 +398,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                             onPress={() => { showMyStreams() }}
                             iconSource={Images.FLASH_ICON}
                             disabled={!liveSales}
-                            label={'My Streams'}
+                            label={'My Events'}
                         />
                         <MenuItem
                             onPress={() => { handleLogout() }}
@@ -460,12 +495,13 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
                             data={liveSales}
                             renderItem={renderBottomMenuItem}
                             keyExtractor={(item) => JSON.stringify(item)}
+                            ListHeaderComponent={renderBottomListHeader}
                         />
                     )}
                 </View>
                 <StopConfirmationModal
-                    onStopStream={stopStream}
-                    onStopStreamFacebook={stopStream}
+                    onStopStream={stopAndDeleteLiveStreamIngestServer}
+                    onStopStreamFacebook={stopAndDeleteLiveStreamIngestServer}
                     onClose={() => setIsStopModalVisible(false)}
                     visible={isStopModalVisible}
                 />
@@ -536,4 +572,32 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    menuImgWrapper: {
+        width: 64,
+        height: 64,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    menuImg: {
+        width: 20,
+        height: 20,
+        tintColor: '#fff',
+        alignSelf: 'center'
+    },
+    titleText: {
+        fontFamily: 'Roboto',
+        fontSize: 18,
+        fontWeight: '500',
+        color: 'white',
+        justifyContent: 'center',
+        alignSelf: 'center',
+        marginLeft: 15
+    },
+    bottomMenuHeader: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        borderBottomColor: '#CB396B',
+        borderBottomWidth: 1,
+    }
 });
